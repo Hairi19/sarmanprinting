@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Login · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+body{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;min-height:100svh;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(192,39,43,0.15) 0%, transparent 50%),
+    linear-gradient(160deg, var(--brand-red) 0%, var(--brand-red-dark) 55%, var(--ink) 100%);
+  padding:12px;
+  position:relative;overflow:hidden;margin:0;
+}
+body::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size:28px 28px;pointer-events:none;
+}
+.deco-mark{position:absolute;width:90px;height:90px;opacity:0.07;pointer-events:none;}
+.deco-mark::before{content:'';position:absolute;inset:0;border-radius:50%;border:3px solid #fff;}
+.deco-mark::after{content:'';position:absolute;inset:16px;border-radius:50%;border:2px solid #fff;}
+.deco-mark .cross-h,.deco-mark .cross-v{position:absolute;background:#fff;}
+.deco-mark .cross-h{top:50%;left:0;right:0;height:2px;transform:translateY(-50%);}
+.deco-mark .cross-v{left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);}
+.deco-mark.tl{top:24px;left:36px;}
+.deco-mark.br{bottom:30px;right:50px;width:120px;height:120px;}
+
+.login-card{
+  width:440px;max-width:100%;
+  background:#fff;border-radius:var(--radius-xl);
+  padding:1.1rem 1.5rem 1rem;
+  box-shadow:0 20px 60px rgba(0,0,0,0.35);
+  animation:cardIn 0.5s cubic-bezier(.2,.9,.25,1) both;
+  position:relative;z-index:1;
+  border:1px solid rgba(255,255,255,0.2);
+  overflow:hidden;
+}
+.login-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg, var(--brand-red) 0%, var(--ink) 100%);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+/* ===== COMPACT HEADER ===== */
+.login-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.login-brand{flex-shrink:0;}
+.login-brand .brand-logo-img{height:48px;width:auto;display:block;}
+.login-title-wrap{min-width:0;text-align:left;}
+.login-title-wrap h1{font-size:20px;font-weight:700;color:var(--ink);margin:0;line-height:1.2;}
+.login-title-wrap .sub{color:var(--ink-light);font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;font-weight:600;margin-top:1px;}
+.login-title-wrap .tagline{color:var(--brand-red);font-size:11px;font-style:italic;margin:2px 0 0;}
+
+/* ===== RFID SECTION (compact) ===== */
+.rfid-section{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;background:var(--surface-alt);
+  border-radius:var(--radius);border:1.5px solid var(--line);
+  margin-bottom:10px;
+}
+.rfid-avatar{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 100%);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-heading);font-size:20px;font-weight:700;
+  border:3px solid var(--brand-red);box-shadow:0 3px 12px rgba(192,39,43,0.2);
+  position:relative;
+}
+.rfid-avatar::after{
+  content:'';position:absolute;inset:-5px;border-radius:50%;
+  border:2px dashed var(--brand-red-soft);opacity:0.5;
+  animation:spin 12s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.rfid-info{flex:1;min-width:0;text-align:left;}
+.rfid-info .name{font-weight:700;font-size:15px;color:var(--ink);line-height:1.2;}
+.rfid-info .role{font-size:11.5px;color:var(--ink-light);margin-top:1px;}
+.rfid-info .dept{
+  display:inline-block;font-size:10px;color:var(--brand-red);
+  background:var(--brand-red-light);padding:2px 8px;border-radius:999px;
+  font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;
+}
+.rfid-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+.btn-rfid-switch{
+  padding:6px 12px;font-size:11px;font-weight:600;
+  background:var(--paper-warm);border:1.5px dashed var(--brand-red-soft);
+  color:var(--brand-red-dark);border-radius:999px;cursor:pointer;
+  transition:all 0.15s;font-family:var(--font-body);white-space:nowrap;
+}
+.btn-rfid-switch:hover{background:var(--brand-red-light);}
+.btn-signin-main{
+  padding:8px 16px;font-size:12.5px;font-weight:700;
+  background:var(--brand-red);color:#fff;border:none;
+  border-radius:999px;cursor:pointer;transition:all 0.15s;
+  font-family:var(--font-body);white-space:nowrap;
+}
+.btn-signin-main:hover{background:var(--brand-red-dark);transform:translateY(-1px);box-shadow:var(--shadow-red);}
+
+/* ===== DIVIDER ===== */
+.compact-divider{
+  display:flex;align-items:center;gap:10px;margin:10px 0;
+  color:var(--ink-muted);font-size:10px;text-transform:uppercase;
+  letter-spacing:0.08em;font-weight:600;
+}
+.compact-divider::before,.compact-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+
+/* ===== EMAIL LOGIN FORM (compact) ===== */
+.email-login-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;
+}
+.email-login-grid input{
+  margin-bottom:0;padding:9px 12px;font-size:13px;
+}
+.email-login-grid .full{grid-column:1 / -1;}
+.email-login-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;
+}
+.btn-email-signin{
+  padding:9px 20px;font-size:13px;font-weight:700;
+  background:var(--ink);color:#fff;border:none;border-radius:999px;
+  cursor:pointer;transition:all 0.15s;font-family:var(--font-body);
+}
+.btn-email-signin:hover{background:var(--ink-2);transform:translateY(-1px);}
+.demo-hint{
+  font-size:10.5px;color:var(--ink-light);background:var(--paper-warm);
+  border-radius:6px;padding:7px 10px;border-left:2px solid var(--brand-red);
+  line-height:1.5;margin-top:6px;
+}
+.demo-hint strong{color:var(--ink-3);}
+.demo-hint .mono{font-family:var(--font-mono);font-size:10px;}
+
+.back-link{
+  display:block;text-align:center;margin-top:8px;
+  font-size:11.5px;color:var(--ink-light);text-decoration:none;transition:color 0.15s;
+}
+.back-link:hover{color:var(--brand-red);text-decoration:underline;}
+
+@media (max-width:480px){
+  .login-card{padding:1rem 1.1rem 0.9rem;}
+  .email-login-grid{grid-template-columns:1fr;}
+  .deco-mark{display:none;}
+  .rfid-section{flex-wrap:wrap;}
+  .rfid-actions{flex-direction:row;width:100%;justify-content:flex-end;}
+}
+</style>
+</head>
+<body>
+
+  <div class="deco-mark tl"><span class="cross-h"></span><span class="cross-v"></span></div>
+  <div class="deco-mark br"><span class="cross-h"></span><span class="cross-v"></span></div>
+
+  <div class="login-card">
+
+    <!-- Header -->
+    <div class="login-top">
+      <div class="login-brand">
+        <img src="assets/logo.png" alt="Sarman Printing" class="brand-logo-img" aria-hidden="true">
+      </div>
+      <div class="login-title-wrap">
+        <h1>ORBIT</h1>
+        <div class="sub">Order Routing &amp; Business Item Tracking</div>
+        <div class="tagline">Sarman Printing &middot; "Order Harini, Siap Semalam?"</div>
+      </div>
+    </div>
+
+    <!-- Staff Email Login Form -->
+    <form onsubmit="event.preventDefault();manualSignIn();">
+      <div class="email-login-grid">
+        <div class="full">
+          <label style="font-size:11px;font-weight:600;margin-bottom:3px;display:block;">Staff Email <span class="req">*</span></label>
+          <input type="email" id="manual-email" placeholder="e.g. you@company.com" style="margin-bottom:0;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;margin-bottom:3px;display:block;">Password <span class="req">*</span></label>
+          <input type="password" id="manual-pass" placeholder="Enter password" style="margin-bottom:0;">
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button type="submit" class="btn-email-signin" style="width:100%;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle;margin-right:4px;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Sign In
+          </button>
+        </div>
+      </div>
+    </form>
+
+<a href="index.html" class="back-link">&larr; Back to public order tracking</a>
+
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+/* ===== ORBIT staff login — real Supabase Auth ===== */
+const loginParams = new URLSearchParams(location.search);
+const loginRedirect = loginParams.get("redirect");
+
+/* If already logged in, go straight to landing page */
+(function(){
+  const uid = orbitGetUid();
+  if(uid !== null){
+    const u = ORBIT_USERS[uid];
+    location.href = (u && u.landing) ? u.landing : "dashboard.html";
+  }
+})();
+
+function doRedirect(landing){
+  location.href = loginRedirect || landing || "dashboard.html";
+}
+
+async function manualSignIn(){
+  const emailEl = document.getElementById("manual-email");
+  const passEl = document.getElementById("manual-pass");
+  const btn = document.querySelector(".btn-email-signin");
+  const email = emailEl.value.trim().toLowerCase();
+  const pass = passEl.value;
+  if(!email){ orbitToast("Enter staff email", "warning"); return; }
+  if(!pass){ orbitToast("Enter password", "warning"); return; }
+  const sb = orbitSB();
+  if(!sb){
+    orbitToast("Supabase not configured yet — edit assets/supabase-config.js (see README)", "danger");
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Signing in…";
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+    if(error || !data || !data.user){
+      orbitToast((error && error.message) ? error.message : "Login failed — check email & password", "danger");
+      btn.disabled = false; btn.textContent = "Sign In";
+      return;
+    }
+    /* First-ever user => IT Administrator (full access). Others => default restricted staff profile. */
+    const profile = await orbitEnsureProfileForUser(data.user);
+    orbitToast("Welcome, " + (profile && profile.name ? profile.name : email) + "!", "success");
+    setTimeout(function(){ doRedirect(profile && profile.landing ? profile.landing : "dashboard.html"); }, 450);
+  } catch(err){
+    orbitToast("Login error: " + (err && err.message ? err.message : err), "danger");
+    btn.disabled = false; btn.textContent = "Sign In";
+  }
+}
+document.getElementById("manual-pass").addEventListener("keydown", function(e){ if(e.key === "Enter") manualSignIn(); });
+document.getElementById("manual-email").addEventListener("keydown", function(e){ if(e.key === "Enter") document.getElementById("manual-pass").focus(); });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarman Printing — Track Your Order</title>
+<meta name="description" content="Sarman Printing Sdn Bhd — Track your print order progress. Custom packaging, flyers, stickers, branded paper bags.">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+body{background:var(--paper);margin:0;display:flex;flex-direction:column;min-height:100vh;}
+
+/* Public header */
+.pub-header{
+  background:linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 60%, var(--brand-red-deep) 100%);
+  padding:18px 36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow:var(--shadow-lg);
+  border-bottom:3px solid var(--ink);
+  position:relative;
+  z-index:10;
+}
+.pub-header::before{
+  content:'';
+  position:absolute;
+  bottom:-3px;
+  left:0;
+  right:0;
+  height:3px;
+  background:repeating-linear-gradient(90deg, var(--ink) 0px, var(--ink) 8px, transparent 8px, transparent 16px);
+  opacity:0.15;
+}
+.pub-header-left{display:flex;align-items:center;gap:14px;}
+.pub-brand{display:flex;align-items:center;gap:12px;}
+.pub-brand .brand-logo-img{height:48px;}
+.pub-brand-text{
+  color:#fff;
+  font-family:var(--font-heading);
+  font-weight:700;
+  font-size:22px;
+  letter-spacing:0.01em;
+}
+.pub-brand-sub{
+  color:rgba(255,255,255,0.78);
+  font-size:11.5px;
+  font-style:italic;
+  margin-top:2px;
+}
+.pub-header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pub-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(255,255,255,0.16);
+  color:#fff;
+  padding:9px 18px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:600;
+  text-decoration:none;
+  border:1px solid rgba(255,255,255,0.15);
+  cursor:pointer;
+  font-family:var(--font-body);
+  transition:all 0.15s ease;
+}
+.pub-pill:hover{
+  background:rgba(255,255,255,0.26);
+  text-decoration:none;
+  transform:translateY(-1px);
+}
+.pub-pill.solid{
+  background:#fff;
+  color:var(--brand-red-dark);
+  border-color:#fff;
+  font-weight:700;
+}
+.pub-pill.solid:hover{background:var(--paper-warm);}
+
+/* Hero section */
+.pub-hero{
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(192,39,43,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(28,27,26,0.04) 0%, transparent 50%);
+  padding:3.5rem 1.5rem 2.5rem;
+}
+.pub-hero-inner{
+  max-width:820px;
+  margin:0 auto;
+  text-align:center;
+}
+.pub-hero h1{
+  font-size:38px;
+  font-weight:700;
+  color:var(--ink);
+  margin-bottom:10px;
+  line-height:1.15;
+}
+.pub-hero h1 span{color:var(--brand-red);}
+.pub-hero .tagline{
+  font-size:15px;
+  color:var(--ink-light);
+  margin-bottom:2rem;
+  font-style:italic;
+}
+
+/* Tracking card */
+.track-card{
+  background:#fff;
+  border-radius:var(--radius-xl);
+  padding:2.2rem;
+  box-shadow:var(--shadow-lg);
+  text-align:center;
+  animation:cardIn 0.5s cubic-bezier(.2,.9,.25,1) both;
+  border:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+}
+.track-card::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:5px;
+  background:linear-gradient(90deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.track-card h2{
+  color:var(--ink);
+  font-size:24px;
+  margin-bottom:6px;
+  font-weight:700;
+}
+.track-card p{color:var(--ink-light);font-size:14px;margin-bottom:24px;}
+.track-row{
+  display:flex;
+  gap:10px;
+  max-width:520px;
+  margin:0 auto;
+}
+.track-row input{
+  margin-bottom:0;
+  flex:1;
+  padding:14px 20px;
+  font-size:15px;
+  border-radius:999px;
+  font-family:var(--font-mono);
+}
+.track-row button{
+  padding:0 28px;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:700;
+}
+.track-result{margin-top:2rem;text-align:left;animation:fadeIn 0.3s ease both;}
+.track-not-found{
+  margin-top:1.5rem;
+  color:var(--danger);
+  font-size:13.5px;
+  background:var(--danger-bg);
+  border:1px solid #FFCDD2;
+  padding:14px 18px;
+  border-radius:var(--radius);
+  text-align:left;
+}
+
+/* Category cards */
+.pub-categories{
+  max-width:1100px;
+  margin:0 auto;
+  padding:0 1.5rem 3rem;
+}
+.pub-categories h3{
+  text-align:center;
+  font-size:18px;
+  font-weight:700;
+  color:var(--ink);
+  margin-bottom:1.5rem;
+  font-family:var(--font-heading);
+}
+.cat-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+}
+.cat-card{
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:var(--radius-lg);
+  padding:1.75rem 1.25rem;
+  text-align:center;
+  text-decoration:none;
+  color:var(--ink);
+  box-shadow:var(--shadow-sm);
+  transition:all 0.2s ease;
+  cursor:pointer;
+  animation:fadeInUp 0.4s ease both;
+  position:relative;
+  overflow:hidden;
+}
+.cat-card::after{
+  content:'';
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:3px;
+  background:var(--brand-red);
+  transform:scaleX(0);
+  transition:transform 0.25s ease;
+  transform-origin:left;
+}
+.cat-card:hover{
+  transform:translateY(-4px);
+  box-shadow:var(--shadow-md);
+  border-color:var(--brand-red-soft);
+  text-decoration:none;
+}
+.cat-card:hover::after{transform:scaleX(1);}
+.cat-card:nth-child(1){animation-delay:0.05s;}
+.cat-card:nth-child(2){animation-delay:0.10s;}
+.cat-card:nth-child(3){animation-delay:0.15s;}
+.cat-card:nth-child(4){animation-delay:0.20s;}
+.cat-icon{
+  width:56px;
+  height:56px;
+  margin:0 auto 14px;
+  border-radius:var(--radius);
+  background:linear-gradient(135deg, var(--brand-red-light) 0%, #F5D4D4 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--brand-red);
+  transition:all 0.2s ease;
+}
+.cat-card:hover .cat-icon{
+  background:linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  color:#fff;
+  transform:scale(1.08);
+}
+.cat-card .cat-label{
+  font-size:14px;
+  font-weight:700;
+  font-family:var(--font-heading);
+  line-height:1.3;
+  color:var(--ink);
+}
+.cat-card .cat-desc{
+  font-size:11.5px;
+  color:var(--ink-light);
+  margin-top:6px;
+}
+
+/* Footer */
+.pub-footer{
+  background:var(--ink);
+  color:#D8D6D0;
+  padding:3rem 2rem 1.5rem;
+  margin-top:auto;
+  border-top:4px solid var(--brand-red);
+}
+.footer-inner{
+  max-width:1180px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:1.2fr 1.4fr 0.9fr;
+  gap:2.5rem;
+}
+.footer-inner h4{
+  color:#fff;
+  font-family:var(--font-heading);
+  font-size:15px;
+  font-weight:700;
+  margin:0 0 16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.footer-inner h4::before{
+  content:'';
+  width:4px;
+  height:18px;
+  background:var(--brand-red);
+  border-radius:2px;
+}
+.footer-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  font-size:13px;
+  line-height:1.55;
+  margin-bottom:12px;
+  color:#BDB9B0;
+}
+.footer-row svg{
+  flex-shrink:0;
+  margin-top:3px;
+  color:var(--brand-red);
+}
+.footer-row a{color:#BDB9B0;text-decoration:none;transition:color 0.15s;}
+.footer-row a:hover{color:#fff;text-decoration:underline;}
+.footer-rule{
+  max-width:1180px;
+  margin:2rem auto 1.2rem;
+  border:none;
+  border-top:1px solid #3A3835;
+}
+.footer-copy{
+  text-align:center;
+  font-size:12px;
+  color:#8A8880;
+}
+.footer-company-no{
+  font-size:11px;
+  color:#787570;
+  margin-top:4px;
+  font-family:var(--font-mono);
+}
+
+@media (max-width:900px){
+  .cat-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-inner{grid-template-columns:1fr;gap:1.8rem;}
+  .pub-header{padding:14px 20px;flex-wrap:wrap;gap:10px;}
+  .pub-hero{padding:2.5rem 1rem 2rem;}
+  .pub-hero h1{font-size:28px;}
+  .track-row{flex-direction:column;}
+  .track-row button{justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+  <!-- ===== PUBLIC HEADER ===== -->
+  <div class="pub-header">
+    <div class="pub-header-left">
+      <div class="pub-brand">
+        <img src="assets/logo.png" alt="Sarman Printing" class="brand-logo-img" aria-hidden="true">
+        <div>
+          <div class="pub-brand-text">SARMAN PRINTING</div>
+          <div class="pub-brand-sub">"Order Harini, Siap Semalam?"</div>
+        </div>
+      </div>
+    </div>
+    <div class="pub-header-right">
+      <a href="https://wa.me/60124771773" class="pub-pill" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-1.5-.7-2.5-1.3-3.5-3-.3-.5.3-.4.7-1.5.1-.2 0-.4 0-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3Z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.2-.4-4.5-1.2l-.3-.2-3 .9.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/></svg>
+        +6012-4771773
+      </a>
+      <a href="staff-login.html" class="pub-pill solid">Staff / Admin Login</a>
+    </div>
+  </div>
+
+  <!-- ===== HERO & TRACKER ===== -->
+  <div class="pub-hero">
+    <div class="pub-hero-inner">
+      <h1>Track Your <span>Print Order</span> Progress</h1>
+      <p class="tagline">From Sales to Delivery — 14 stages, full transparency.</p>
+
+      <div class="track-card">
+        <h2>Order Tracking</h2>
+        <p>Enter your order number below to see which department is currently working on it.</p>
+        <div class="track-row">
+          <input type="text" id="track-input" placeholder="e.g. JOB-0001">
+          <button class="btn btn-primary btn-lg" onclick="trackOrder()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <circle cx="11" cy="11" r="7"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Track Order
+          </button>
+        </div>
+        <div id="track-output"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SERVICE CATEGORIES ===== -->
+  <div class="pub-categories">
+    <h3>Our Services — Click to Enquire via WhatsApp</h3>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="pub-footer">
+    <div class="footer-inner">
+      <div>
+        <h4>Contact Us</h4>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m3 6 9 7 9-7"/>
+          </svg>
+          <a href="mailto:marketing.sarmanprinting@gmail.com">marketing.sarmanprinting@gmail.com</a>
+        </div>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-1.5-.7-2.5-1.3-3.5-3-.3-.5.3-.4.7-1.5.1-.2 0-.4 0-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3Z"/>
+            <path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.2-.4-4.5-1.2l-.3-.2-3 .9.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/>
+          </svg>
+          <a href="https://wa.me/60124771773" target="_blank" rel="noopener">+6012-4771773 (Main Sales)</a>
+        </div>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-1.5-.7-2.5-1.3-3.5-3-.3-.5.3-.4.7-1.5.1-.2 0-.4 0-.5-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.2-.1-.2-.3-.2-.5-.3Z"/>
+            <path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.2-.4-4.5-1.2l-.3-.2-3 .9.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Z"/>
+          </svg>
+          <a href="https://wa.me/601159609916" target="_blank" rel="noopener">+6011-59609916 (East Coast / Kelantan)</a>
+        </div>
+        <div class="footer-company-no">Sarman Printing Sdn Bhd (1225205-P)</div>
+      </div>
+
+      <div>
+        <h4>Our Branches</h4>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span><strong>HQ:</strong> No. 8, Jalan PBS 14/9, Taman Perindustrian Bukit Serdang, Seri Kembangan</span>
+        </div>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span><strong>Bangi:</strong> No. 30, Jalan P10/21, Taman Industri Selaman, Bandar Baru Bangi</span>
+        </div>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span><strong>Kelantan:</strong> Lot 1212 C&amp;D, Jalan Pengkalan Chepa, Kota Bharu</span>
+        </div>
+      </div>
+
+      <div>
+        <h4>Follow Us</h4>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="1"/>
+          </svg>
+          <a href="https://instagram.com/sarman_printing" target="_blank" rel="noopener">Instagram: @sarman_printing</a>
+        </div>
+        <div class="footer-row">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.5 21v-7.6h2.6l.4-3H13.5V8.3c0-.9.2-1.5 1.5-1.5h1.6V4.1C16.3 4 15.3 4 14.2 4c-2.3 0-3.9 1.4-3.9 4v2.4H7.7v3h2.6V21h3.2Z"/>
+          </svg>
+          <a href="https://facebook.com/sarmanprinting" target="_blank" rel="noopener">Facebook: Sarman Printing</a>
+        </div>
+      </div>
+    </div>
+
+    <hr class="footer-rule">
+    <p class="footer-copy">© 2026 Sarman Printing Sdn Bhd (1225205-P). All rights reserved. &middot; "Order Harini, Siap Semalam?"</p>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+/* Service category shortcuts — each opens a pre-filled WhatsApp enquiry */
+const CATEGORIES = [
+  {
+    label:"Custom Packaging Boxes",
+    desc:"Premium boxes for your products",
+    msg:"custom packaging boxes",
+    icon:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>'
+  },
+  {
+    label:"Flyers & Banners",
+    desc:"Promotional materials",
+    msg:"flyers and banners",
+    icon:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="1"/><path d="M3 9h18M7 14h6"/><path d="M17 18v3l3-3"/></svg>'
+  },
+  {
+    label:"Custom Stickers",
+    desc:"Labels & decals",
+    msg:"custom stickers",
+    icon:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m10 3 8.5 8.5a3 3 0 0 1 0 4.2l-3.8 3.8a3 3 0 0 1-4.2 0L2 11V3h8Z"/><circle cx="7" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>'
+  },
+  {
+    label:"Branded Paper Bags",
+    desc:"Eco-friendly packaging",
+    msg:"branded paper bags",
+    icon:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8h12l1 13H5L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>'
+  }
+];
+
+document.getElementById("cat-grid").innerHTML = CATEGORIES.map(c =>
+  '<a class="cat-card" href="https://wa.me/60124771773?text=' +
+  encodeURIComponent("Hi Sarman Printing, I'd like to enquire about " + c.msg) +
+  '" target="_blank" rel="noopener">' +
+  '<div class="cat-icon">' + c.icon + '</div>' +
+  '<div class="cat-label">' + c.label + '</div>' +
+  '<div class="cat-desc">' + c.desc + '</div>' +
+  '</a>'
+).join("");
+
+/* Real order lookup — reads live jobs from the database */
+function trackOrder(){
+  const raw = document.getElementById("track-input").value.trim().toUpperCase();
+  const out = document.getElementById("track-output");
+
+  if(!raw){
+    out.innerHTML = '<div class="track-not-found">Please enter an order number to track.</div>';
+    return;
+  }
+
+  const order = orbitGetJob(raw);
+  if(order){ order.statusLabel = ({waiting:"Awaiting", progress:"In Progress", complete:"Completed", rework:"In Rework"})[order.status] || order.status; if(order.status==="complete" && order.stage>=13) order.statusLabel="Delivered"; }
+  if(!order){
+    out.innerHTML = '<div class="track-not-found">' +
+      '<strong>Order not found.</strong><br>' +
+      'We couldn\'t find an order with number "' + raw + '". ' +
+      'Please double-check your order ID or call us at +6012-4771773 for assistance.' +
+      '</div>';
+    return;
+  }
+
+  const stageName = ORBIT_STAGES[Math.min(order.stage, ORBIT_STAGES.length - 1)].name;
+  const stageGroup = ORBIT_STAGES[Math.min(order.stage, ORBIT_STAGES.length - 1)].group;
+
+  out.innerHTML =
+    '<div class="track-result">' +
+      '<div class="job-card" style="margin-bottom:0;">' +
+        '<div class="job-card-head">' +
+          '<div>' +
+            '<div class="job-id">' + raw + '</div>' +
+            '<div class="job-client">' + order.client + '</div>' +
+          '</div>' +
+          '<span class="badge badge-' + order.status + '">' + order.statusLabel + '</span>' +
+        '</div>' +
+        '<div style="margin:8px 0 4px;">' + orbitStageStrip(order.stage) + '</div>' +
+        '<div class="note info" style="margin-top:10px;">' +
+          '<strong>Currently at:</strong> ' + stageName + ' (Stage ' + (order.stage + 1) + ' of 14) &middot; ' + stageGroup +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+document.getElementById("track-input").addEventListener("keydown", e => {
+  if(e.key === "Enter") trackOrder();
+});
+orbitPullOnce();
+</script>
+
+</body>
+</html>
