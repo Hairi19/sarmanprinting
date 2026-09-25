@@ -250,6 +250,7 @@ function showModal(data, title){
             '<p class="note" style="margin-top:8px;">Select which pages this employee can access. Each department should only see their own workflow pages.</p>' +
           '</div>' +
         '</div>' +
+        '<div id="emp-modal-error" style="display:none;color:#C0272B;background:#FDECEA;border:1px solid #F5C6C0;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>' +
         '<div class="modal-footer">' +
           '<button class="btn" onclick="closeModal()">Cancel</button>' +
           '<button class="btn btn-primary" onclick="saveEmployee()">Save Employee</button>' +
@@ -272,6 +273,15 @@ function closeModal(){
 }
 
 /* ===== Save Employee ===== */
+/* Show a validation error inside the modal (impossible to miss) + toast */
+function empError(msg, focusId){
+  const e = document.getElementById("emp-modal-error");
+  if(e){ e.textContent = "⚠ " + msg; e.style.display = "block"; }
+  orbitToast(msg, "warning");
+  if(focusId){ const el = document.getElementById(focusId); if(el) el.focus(); }
+}
+function empClearError(){ const e = document.getElementById("emp-modal-error"); if(e){ e.textContent = ""; e.style.display = "none"; } }
+
 /* Create the staff login (Supabase Auth) without disturbing the admin's session */
 async function orbitCreateStaffLogin(email, password){
   const sb = orbitSB();
@@ -290,6 +300,8 @@ async function orbitCreateStaffLogin(email, password){
 }
 
 async function saveEmployee(){
+  empClearError();
+  try {
   const name = document.getElementById("emp-name").value.trim();
   const surname = document.getElementById("emp-surname").value.trim();
   const initials = document.getElementById("emp-initials").value.trim().toUpperCase() || orbitGenerateInitials(name);
@@ -301,20 +313,19 @@ async function saveEmployee(){
   const pages = Array.from(document.querySelectorAll('input[name="emp-pages"]:checked')).map(cb => cb.value);
 
   // Validation
-  if(!name){ orbitToast("Please enter full name", "warning"); document.getElementById("emp-name").focus(); return; }
-  if(!email){ orbitToast("Please enter email", "warning"); document.getElementById("emp-email").focus(); return; }
-  if(editingId === null && !password){ orbitToast("Please set a login password for the new staff", "warning"); document.getElementById("emp-password").focus(); return; }
-  if(editingId === null && password.length < 6){ orbitToast("Password must be at least 6 characters", "warning"); document.getElementById("emp-password").focus(); return; }
-  if(!role){ orbitToast("Please enter role", "warning"); document.getElementById("emp-role").focus(); return; }
-  if(!dept){ orbitToast("Please select department", "warning"); document.getElementById("emp-dept").focus(); return; }
-  if(pages.length === 0){ orbitToast("Select at least one page permission", "warning"); return; }
-  if(!pages.includes(landing)){ orbitToast("Landing page must be in allowed pages", "warning"); return; }
+  if(!name){ empError("Please enter full name", "emp-name"); return; }
+  if(!email){ empError("Please enter email", "emp-email"); return; }
+  if(editingId === null && !password){ empError("Please set a login password for the new staff", "emp-password"); return; }
+  if(editingId === null && password.length < 6){ empError("Password must be at least 6 characters", "emp-password"); return; }
+  if(!role){ empError("Please enter role / job title", "emp-role"); return; }
+  if(!dept){ empError("Please select a Department (scroll up in the form)", "emp-dept"); return; }
+  if(pages.length === 0){ empError("Select at least one page permission"); return; }
+  if(!pages.includes(landing)){ empError("Landing page must also be ticked in Page Access Permissions"); return; }
 
   // Check email uniqueness
   const existing = orbitGetEmployeeByEmail(email);
   if(existing && existing.id !== editingId){
-    orbitToast("Email already registered", "danger");
-    document.getElementById("emp-email").focus();
+    empError("This email is already registered — use a different email", "emp-email");
     return;
   }
 
@@ -338,6 +349,10 @@ async function saveEmployee(){
 
   closeModal();
   renderEmployees();
+  } catch(err){
+    empError("Save failed: " + (err && err.message ? err.message : String(err)));
+    console.error(err);
+  }
 }
 
 /* ===== Initialize ===== */

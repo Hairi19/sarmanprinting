@@ -2143,3 +2143,6 @@ fieldset.orbit-fieldset legend{
 @media (max-width:900px){
   .topbar-search{ display:none; }
 }
+
+/* toast must appear above modals */
+.toast{ z-index:99999 !important; }
