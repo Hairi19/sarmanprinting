@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Sales Department</h1>
+      <p class="page-desc">Manage open orders, create new jobs, and approve artwork on behalf of customers.</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="location.href='new-order.html'+location.search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Create New Order
+      </button>
+      <a id="price-ref-link" class="excel-btn" href="price-reference.html" target="_blank" rel="noopener" title="Opens the latest material & process price list in a new tab">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="16" y2="17"/>
+        </svg>
+        Price Reference
+      </a>
+      <button class="btn" onclick="document.getElementById('approval-section').scrollIntoView({behavior:'smooth'})">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
+        </svg>
+        Pending Approvals
+      </button>
+    </div>
+
+    <!-- Open Orders Table -->
+    <div class="card accent-top">
+      <h2 style="margin-bottom:0.5rem;">Open Orders</h2>
+      <p class="note" style="margin-top:0.5rem;margin-bottom:1.1rem;">
+        Active orders currently in the system. Click "View" to see the order's QR code and full details.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Job ID</th>
+            <th>Client</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Deadline</th>
+            <th>Stage</th>
+            <th>Status</th>
+            <th>QR</th>
+          </tr>
+        </thead>
+        <tbody id="sales-orders-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Artwork Approval Form -->
+    <div class="card accent-top" id="approval-section">
+      <h2 style="margin-bottom:0.5rem;">Artwork Approval — Client Sign-Off</h2>
+      <p class="note" style="margin-top:0.5rem;margin-bottom:1.2rem;">
+        <strong>Form 3 of 4.</strong> Design submits the artwork here. Sales confirms the finishing specification with the customer,
+        then accepts or rejects on the customer's behalf.
+      </p>
+
+      <div class="important-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a1.9 1.9 0 0 0 1.63 2.85h17.1A1.9 1.9 0 0 0 22.18 18L13.71 3.86a1.9 1.9 0 0 0-3.42 0Z"/>
+        </svg>
+        Review the artwork and finishing specification with the customer before approving.
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="font-weight:600;">Job awaiting artwork approval</label>
+        <select id="approval-job-select" onchange="populateApprovalForm()" style="width:100%;margin-top:4px;">
+          <option value="">— select a job from the design queue —</option>
+        </select>
+      </div>
+
+      <!-- Form 3 Header -->
+      <div class="card" style="background:var(--surface-alt);margin-bottom:1.25rem;">
+        <h3 style="margin-bottom:1rem;">Artwork Approval Header</h3>
+        <div class="formgrid-3">
+          <div><label>Design Name</label><input type="text" id="approval-design-name" value="" readonly style="background:var(--surface);"></div>
+          <div><label>Client / Brand</label><input type="text" id="approval-client" value="" readonly style="background:var(--surface);"></div>
+          <div><label>Date</label><input type="text" id="approval-date" value="" readonly style="background:var(--surface);font-family:var(--font-mono);"></div>
+          <div><label>Designer</label><input type="text" id="approval-designer" value="" readonly style="background:var(--surface);"></div>
+          <div><label>Sales Person</label><input type="text" id="approval-sales" value="" readonly style="background:var(--surface);"></div>
+          <div><label>Job ID</label><input type="text" id="approval-jobid" value="" readonly style="background:var(--surface);font-family:var(--font-mono);font-weight:600;color:var(--brand-red);"></div>
+        </div>
+      </div>
+
+      <!-- Cross-department reference -->
+      <div class="compare-box" id="approval-compare">
+        <div class="cb-title">From Sales — Original Order Commitment</div>
+        Select a job above to view its original order commitment here.
+      </div>
+
+      <!-- Finishing, Lamination, Colour -->
+      <div class="formgrid-3">
+        <fieldset class="orbit-fieldset">
+          <legend>Finishing</legend>
+          <div class="checkrow">
+            <label class="chk"><input type="checkbox" checked> Spot UV</label>
+            <label class="chk"><input type="checkbox"> Stamping</label>
+            <label class="chk"><input type="checkbox"> Emboss</label>
+            <label class="chk"><input type="checkbox"> None</label>
+          </div>
+        </fieldset>
+        <fieldset class="orbit-fieldset">
+          <legend>Lamination</legend>
+          <div class="checkrow">
+            <label class="chk"><input type="radio" name="aw-lam" checked> Matte</label>
+            <label class="chk"><input type="radio" name="aw-lam"> Gloss</label>
+            <label class="chk"><input type="radio" name="aw-lam"> None</label>
+          </div>
+        </fieldset>
+        <fieldset class="orbit-fieldset">
+          <legend>Colour</legend>
+          <div class="checkrow">
+            <label class="chk"><input type="radio" name="aw-colour" checked> CMYK</label>
+            <label class="chk"><input type="radio" name="aw-colour"> Pantone</label>
+            <label class="chk"><input type="radio" name="aw-colour"> 1 Color</label>
+          </div>
+        </fieldset>
+      </div>
+
+      <!-- Preview Boxes -->
+      <div class="preview-grid" style="margin-top:0.5rem;">
+        <div class="card" style="background:var(--surface-alt);">
+          <h3 style="margin-bottom:0.75rem;">Die-Cut Preview</h3>
+          <div class="artwork-preview-box">
+            <svg class="preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8" stroke-dasharray="4 3"/><circle cx="12" cy="12" r="2"/>
+            </svg>
+            <div><strong>Die-Cut Artwork</strong><br><small style="opacity:0.7;">no file uploaded yet</small></div>
+          </div>
+          <label>Die-Cut File</label>
+          <input type="text" class="file-input-accent" value="" placeholder="uploaded by designer" readonly>
+        </div>
+        <div class="card" style="background:var(--surface-alt);">
+          <h3 style="margin-bottom:0.75rem;">Final Design Preview</h3>
+          <div class="artwork-preview-box">
+            <svg class="preview-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><circle cx="15" cy="15" r="2"/>
+            </svg>
+            <div><strong>Final Design Artwork</strong><br><small style="opacity:0.7;">no file uploaded yet</small></div>
+          </div>
+          <label>Final Design File</label>
+          <input type="text" class="file-input-accent" value="" placeholder="uploaded by designer" readonly>
+        </div>
+      </div>
+
+      <!-- Customer Feedback -->
+      <div style="margin-top:1.25rem;">
+        <label>Customer Feedback / Revision Note</label>
+        <textarea id="approval-feedback" placeholder="Enter any customer comments, changes requested, or reasons for rejection..."></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="job-actions" style="border-top:none;padding-top:0.5rem;">
+        <button class="btn btn-success btn-lg" onclick="approveArtwork()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Sales Accepts Artwork — Send to Planner
+        </button>
+        <button class="btn btn-danger btn-lg" onclick="rejectArtwork()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+          Reject — Send Back to Design
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("sales.html", "Order Intake · Sales");
+
+if(__uid !== null){
+
+document.getElementById("price-ref-link").href = orbitWithUid("price-reference.html", __uid);
+
+/* ===== Render Orders Table ===== */
+function renderOrdersTable(){
+  const jobs = orbitGetJobs();
+  const tbody = document.getElementById("sales-orders-body");
+
+  tbody.innerHTML = jobs.map(j => {
+    const isUrgent = orbitIsUrgent(j.urgent);
+    const stageName = ORBIT_STAGES[Math.min(j.stage, ORBIT_STAGES.length - 1)].name;
+    const deadlineClass = j.deadlineClass || "";
+
+    return '<tr class="orbit-filterable" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
+      '<td class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</td>' +
+      '<td>' + j.client + '</td>' +
+      '<td>' + (j.product || "—") + '</td>' +
+      '<td class="mono">' + (j.quantity?.toLocaleString() || "—") + '</td>' +
+      '<td class="mono">' + (j.price ? orbitFormatRM(j.price) : "—") + '</td>' +
+      '<td><span class="deadline-tag ' + deadlineClass + '">' + (j.deadline || "—") + '</span></td>' +
+      '<td><span style="font-weight:600;color:var(--brand-red-dark);">' + stageName + '</span></td>' +
+      '<td><span class="badge badge-' + j.status + '">' + (j.statusLabel || j.status) + '</span></td>' +
+      '<td><button class="timeline-view-btn" onclick="showQRModal(\'' + j.id + '\')">View QR</button></td>' +
+    '</tr>';
+  }).join("");
+
+  orbitApplyFilters();
+}
+
+/* ===== QR Modal ===== */
+function showQRModal(jobId){
+  const job = orbitGetJob(jobId);
+  if(!job) return;
+
+  const modal = document.createElement("div");
+  modal.id = "qr-modal-temp";
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this)this.parentElement.remove()">' +
+      '<div class="modal" style="max-width:420px;text-align:center;">' +
+        '<div class="modal-header">' +
+          '<h2>QR Code — ' + jobId + '</h2>' +
+          '<button class="modal-close" onclick="this.closest(\'#qr-modal-temp\').remove()">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="qr-card">' +
+            '<div class="qr-label">Scan to track this order</div>' +
+            orbitQRImageTag(jobId, 180, "qr-code") +
+            '<div class="qr-job-id">' + jobId + '</div>' +
+            '<div class="qr-hint">' + job.client + '</div>' +
+          '</div>' +
+          '<p class="note" style="margin-top:1rem;text-align:left;">' +
+            '<strong>How it works:</strong> Scan this QR code with any phone camera to open the public tracking page. ' +
+            'Production staff can also scan to update job stages with photo proof.' +
+          '</p>' +
+          '<div style="display:flex;gap:10px;justify-content:center;margin-top:1rem;flex-wrap:wrap;">' +
+            '<a class="btn btn-primary" href="qr-view.html?job=' + encodeURIComponent(jobId) + '" target="_blank">Open Tracking Page</a>' +
+            '<button class="print-btn" onclick="window.print()">Print QR Label</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+/* ===== Approval Actions (real — operate on selected job) ===== */
+function populateApprovalSelect(){
+  const sel = document.getElementById("approval-job-select");
+  if(!sel) return;
+  const jobs = orbitGetJobs().filter(function(j){ return j.stage === 1; }); // Design stage = awaiting sales approval
+  sel.innerHTML = '<option value="">— select a job from the design queue —</option>' +
+    jobs.map(function(j){ return '<option value="' + j.id + '">' + j.id + ' — ' + (j.client || "") + '</option>'; }).join("");
+}
+function populateApprovalForm(){
+  const sel = document.getElementById("approval-job-select");
+  const jobId = sel ? sel.value : "";
+  const setv = function(id, v){ const el = document.getElementById(id); if(el) el.value = v || ""; };
+  if(!jobId){
+    ["approval-design-name","approval-client","approval-date","approval-designer","approval-sales","approval-jobid"].forEach(function(i){ setv(i, ""); });
+    const c = document.getElementById("approval-compare");
+    if(c) c.innerHTML = '<div class="cb-title">From Sales — Original Order Commitment</div>Select a job above to view its order commitment.';
+    return;
+  }
+  const j = orbitGetJob(jobId);
+  if(!j) return;
+  const sd = j.salesData || {};
+  setv("approval-design-name", j.description || "");
+  setv("approval-client", j.client || "");
+  setv("approval-date", (j.createdAt || "").split(",")[0]);
+  setv("approval-designer", (j.designData && j.designData.designer) || "—");
+  setv("approval-sales", j.salesPerson || "—");
+  setv("approval-jobid", j.id);
+  const c = document.getElementById("approval-compare");
+  if(c){
+    const specs = [j.product, sd.gsm ? sd.gsm + "gsm " + sd.paperType : sd.paperType, sd.colour, (sd.finishing||[]).join(", ")].filter(Boolean).join(" &middot; ");
+    c.innerHTML = '<div class="cb-title">From Sales — Original Order Commitment</div>' +
+      (specs || "No specs recorded") + (j.quantity ? ' &middot; <strong>Quantity:</strong> ' + Number(j.quantity).toLocaleString() + ' units' : "");
+  }
+}
+function selectedApprovalJob(){
+  const sel = document.getElementById("approval-job-select");
+  const jobId = sel ? sel.value : "";
+  if(!jobId){ orbitToast("Select a job to approve / reject", "warning"); return null; }
+  const j = orbitGetJob(jobId);
+  if(!j){ orbitToast("Job not found", "danger"); return null; }
+  return j;
+}
+function approveArtwork(){
+  const j = selectedApprovalJob();
+  if(!j) return;
+  const feedback = document.getElementById("approval-feedback").value.trim();
+  orbitUpdateJob(j.id, {stage: 2, stageName: "Planner", status: "waiting",
+    designData: Object.assign({}, j.designData || {}, {status: "approved", feedback: feedback})});
+  orbitNotifyDepartments(j.id, j.client, 2, j.id + " artwork approved by Sales — awaiting job sheet", ["planner.html"]);
+  orbitLogAction(j.id + " artwork APPROVED — sent to Planner for job sheet", "success");
+  document.getElementById("approval-feedback").value = "";
+  populateApprovalSelect(); populateApprovalForm(); renderOrdersTable();
+}
+function rejectArtwork(){
+  const j = selectedApprovalJob();
+  if(!j) return;
+  const feedback = document.getElementById("approval-feedback").value.trim();
+  if(!feedback){ orbitToast("Enter a revision note before rejecting", "warning"); document.getElementById("approval-feedback").focus(); return; }
+  orbitUpdateJob(j.id, {designData: Object.assign({}, j.designData || {}, {status: "rework", feedback: feedback})});
+  orbitNotifyDepartments(j.id, j.client, 1, j.id + " rejected by Sales — revision requested: " + feedback.substring(0, 60), ["designer.html","submit-design.html"]);
+  orbitLogAction(j.id + " REJECTED — sent back to Design with revision note", "danger");
+  document.getElementById("approval-feedback").value = "";
+}
+
+/* ===== Initialize ===== */
+renderOrdersTable();
+populateApprovalSelect();
+
+} // end auth check
+</script>
+
+</body>
+</html>

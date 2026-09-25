@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Job Details · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+*{box-sizing:border-box;}
+body{
+  background:var(--paper);
+  min-height:100vh;
+  min-height:100svh;
+  margin:0;
+  padding:0;
+  position:relative;
+  font-family:var(--font-body);
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(circle at 1px 1px, rgba(28,27,26,0.025) 1px, transparent 0);
+  background-size:24px 24px;pointer-events:none;
+}
+
+/* Mobile header */
+.mobile-header{
+  background:linear-gradient(135deg, var(--brand-red) 0%, var(--brand-red-dark) 60%, var(--brand-red-deep) 100%);
+  color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.15);
+}
+.mobile-header .brand-logo-img{height:32px;width:auto;flex-shrink:0;}
+.mobile-header .mh-title{flex:1;min-width:0;}
+.mobile-header .mh-title h1{font-size:15px;font-weight:700;margin:0;line-height:1.2;}
+.mobile-header .mh-title p{font-size:10.5px;margin:1px 0 0;opacity:0.8;font-style:italic;}
+
+/* Content container */
+.qr-content{padding:14px;max-width:600px;margin:0 auto;position:relative;z-index:1;padding-bottom:100px;}
+
+/* Job ID hero */
+.job-hero{
+  background:var(--surface);border-radius:var(--radius-lg);padding:16px;
+  border-top:4px solid var(--brand-red);box-shadow:var(--shadow-sm);margin-bottom:12px;
+  text-align:center;
+}
+.job-hero .jid{font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:0.5px;}
+.job-hero .jclient{font-size:14px;color:var(--ink-3);margin-top:4px;font-weight:600;}
+.job-hero .jproduct{font-size:12px;color:var(--ink-light);margin-top:2px;}
+
+/* Current stage big indicator */
+.current-stage-big{
+  background:linear-gradient(135deg, var(--brand-red), var(--brand-red-dark));
+  color:#fff;border-radius:var(--radius-lg);padding:16px;text-align:center;
+  margin-bottom:12px;box-shadow:var(--shadow-sm);
+}
+.current-stage-big .csl-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.85;}
+.current-stage-big .csl-name{font-size:22px;font-weight:700;margin:4px 0;}
+.current-stage-big .csl-step{font-size:11px;opacity:0.85;}
+
+/* Stage progress strip */
+.stage-strip-mobile{
+  display:flex;gap:3px;overflow-x:auto;padding:8px 0;margin-bottom:12px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;
+}
+.stage-strip-mobile::-webkit-scrollbar{display:none;}
+.ssm-dot{
+  flex-shrink:0;width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;background:var(--line);color:var(--ink-light);
+  position:relative;
+}
+.ssm-dot.done{background:var(--success);color:#fff;}
+.ssm-dot.current{background:var(--brand-red);color:#fff;box-shadow:0 0 0 3px rgba(192,39,43,0.25);}
+.ssm-dot::after{
+  content:'';position:absolute;top:50%;left:100%;width:3px;height:2px;
+  background:var(--line);
+}
+.ssm-dot:last-child::after{display:none;}
+
+/* Info cards */
+.info-card{
+  background:var(--surface);border-radius:var(--radius-lg);padding:14px;
+  margin-bottom:12px;box-shadow:var(--shadow-sm);border:1px solid var(--line);
+}
+.info-card h3{
+  font-size:13px;font-weight:700;color:var(--brand-red-dark);margin:0 0 10px;
+  text-transform:uppercase;letter-spacing:0.04em;display:flex;align-items:center;gap:6px;
+}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-item .lbl{font-size:10px;text-transform:uppercase;color:var(--ink-light);font-weight:700;letter-spacing:0.04em;}
+.info-item .val{font-size:14px;font-weight:600;color:var(--ink);margin-top:2px;}
+.info-item .val.mono{font-family:var(--font-mono);}
+.info-item.full{grid-column:1 / -1;}
+
+/* Spec table */
+.spec-table{width:100%;border-collapse:collapse;font-size:13px;}
+.spec-table th,.spec-table td{
+  border:1px solid var(--line);padding:8px 10px;text-align:left;
+}
+.spec-table th{background:var(--surface-alt);font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-light);}
+
+/* History */
+.history-list{display:flex;flex-direction:column;gap:8px;}
+.history-item{
+  display:flex;gap:10px;padding:10px;background:var(--surface-alt);
+  border-radius:var(--radius);border-left:3px solid var(--brand-red);
+}
+.history-item .hi-stage{
+  flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;
+  color:var(--brand-red-dark);min-width:70px;padding-top:2px;
+}
+.history-item .hi-body{flex:1;min-width:0;}
+.history-item .hi-detail{font-size:12.5px;color:var(--ink);line-height:1.4;}
+.history-item .hi-time{font-size:10.5px;color:var(--ink-light);margin-top:3px;font-family:var(--font-mono);}
+.history-item .hi-photo{
+  width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:pointer;
+  border:1px solid var(--line);
+}
+
+/* Floating action button */
+.fab-container{
+  position:fixed;bottom:16px;left:16px;right:16px;z-index:99;
+  max-width:600px;margin:0 auto;
+}
+.fab-btn{
+  width:100%;padding:14px 20px;font-size:15px;font-weight:700;
+  background:var(--brand-red);color:#fff;border:none;border-radius:999px;
+  box-shadow:0 6px 20px rgba(192,39,43,0.4);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--font-body);transition:all 0.15s;
+  -webkit-appearance:none;touch-action:manipulation;
+}
+.fab-btn:active{transform:scale(0.98);background:var(--brand-red-dark);}
+.fab-btn:disabled{background:var(--ink-light);box-shadow:none;cursor:not-allowed;}
+.fab-btn.secondary{background:var(--ink);box-shadow:0 6px 20px rgba(0,0,0,0.25);}
+
+/* Login prompt */
+.login-prompt{
+  background:var(--surface-alt);border:1.5px dashed var(--line);
+  border-radius:var(--radius-lg);padding:16px;text-align:center;margin-bottom:12px;
+}
+.login-prompt p{margin:0 0 10px;font-size:13px;color:var(--ink-3);}
+.login-prompt a{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;background:var(--brand-red);color:#fff;
+  border-radius:999px;font-weight:600;font-size:13px;text-decoration:none;
+}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn 0.2s ease;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal-sheet{
+  background:var(--surface);width:100%;max-width:600px;
+  border-radius:16px 16px 0 0;padding:18px 16px 24px;
+  max-height:90vh;overflow-y:auto;
+  animation:slideUp 0.25s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-sheet h2{font-size:18px;font-weight:700;margin:0 0 4px;color:var(--ink);}
+.modal-sheet .ms-sub{font-size:12px;color:var(--ink-light);margin-bottom:14px;}
+.modal-close{
+  position:absolute;top:12px;right:14px;background:none;border:none;
+  font-size:24px;color:var(--ink-light);cursor:pointer;padding:4px 8px;
+}
+.modal-sheet label{display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--ink-3);}
+.modal-sheet input,.modal-sheet textarea{
+  width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius);
+  font-size:14px;font-family:var(--font-body);margin-bottom:12px;background:var(--surface);
+}
+.modal-sheet textarea{resize:vertical;min-height:70px;}
+.camera-box{
+  width:100%;min-height:180px;background:var(--surface-alt);
+  border:2px dashed var(--line);border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;overflow:hidden;position:relative;
+}
+.camera-box video,.camera-box img{width:100%;display:block;}
+.camera-placeholder{text-align:center;color:var(--ink-light);font-size:12px;padding:20px;}
+.camera-actions{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.camera-actions button{
+  flex:1;min-width:100px;padding:10px 12px;font-size:12.5px;font-weight:600;
+  border:1.5px solid var(--line);background:var(--surface);border-radius:var(--radius);
+  cursor:pointer;font-family:var(--font-body);color:var(--ink-3);
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.camera-actions button.primary{background:var(--brand-red);color:#fff;border-color:var(--brand-red);}
+.capture-btn{
+  width:56px;height:56px;border-radius:50%;background:var(--brand-red);
+  border:3px solid #fff;box-shadow:0 0 0 2px var(--brand-red);
+  cursor:pointer;margin:0 auto;display:block;flex-shrink:0;
+}
+.submit-btn{
+  width:100%;padding:13px;font-size:15px;font-weight:700;
+  background:var(--brand-red);color:#fff;border:none;border-radius:999px;
+  cursor:pointer;font-family:var(--font-body);margin-top:8px;
+}
+.submit-btn:disabled{background:var(--ink-light);cursor:not-allowed;}
+.req{color:var(--danger);}
+
+/* Delivery info */
+.delivery-box{
+  background:var(--success-bg);border:1.5px solid #C8E6C9;
+  border-radius:var(--radius-lg);padding:14px;margin-bottom:12px;
+}
+.delivery-box h3{color:var(--success-dark);margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;}
+
+/* Photo viewer */
+.photo-viewer{
+  position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.photo-viewer img{max-width:100%;max-height:100%;border-radius:8px;}
+.photo-viewer-close{
+  position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);color:#fff;
+  border:none;font-size:28px;width:40px;height:40px;border-radius:50%;cursor:pointer;
+}
+
+/* Toast for mobile */
+.toast-mobile{
+  position:fixed;top:60px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:500;z-index:3000;box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  animation:toastIn 0.25s ease;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+@media (min-width:600px){
+  .modal-overlay{align-items:center;}
+  .modal-sheet{border-radius:16px;max-height:85vh;}
+}
+</style>
+</head>
+<body>
+
+  <!-- Mobile Header -->
+  <div class="mobile-header">
+    <img src="assets/logo.png" alt="Sarman Printing" class="brand-logo-img" aria-hidden="true">
+    <div class="mh-title">
+      <h1>ORBIT · Job Details</h1>
+      <p>Sarman Printing</p>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="qr-content" id="qr-content"></div>
+
+  <!-- FAB Container -->
+  <div class="fab-container" id="fab-container"></div>
+
+  <!-- Modal Container -->
+  <div id="modal-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+/* ===== Get parameters ===== */
+const params = new URLSearchParams(location.search);
+const jobId = params.get("job");
+const __uid = orbitGetUid();
+
+// Refresh users and check auth
+orbitRefreshUsers();
+const currentUser = __uid !== null && ORBIT_USERS[__uid] ? ORBIT_USERS[__uid] : null;
+const isAuthenticated = currentUser && currentUser.active;
+// Workers scanning the QR on the shop floor do NOT need to log in.
+const canUpdate = true;
+
+/* ===== Mobile toast ===== */
+function showToast(msg, type){
+  const existing = document.querySelector(".toast-mobile");
+  if(existing) existing.remove();
+  const t = document.createElement("div");
+  t.className = "toast-mobile";
+  if(type === "success") t.style.background = "var(--success)";
+  if(type === "danger") t.style.background = "var(--danger)";
+  if(type === "warning") t.style.background = "var(--urgent)";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+/* ===== Render Job View ===== */
+function renderJobView(){
+  const content = document.getElementById("qr-content");
+  const fabContainer = document.getElementById("fab-container");
+
+  if(!jobId){
+    content.innerHTML =
+      '<div style="text-align:center;padding:3rem 1rem;">' +
+        '<h2 style="color:var(--danger);margin-bottom:8px;">No Order Specified</h2>' +
+        '<p style="color:var(--ink-light);">Scan a valid QR code from a job sheet.</p>' +
+      '</div>';
+    fabContainer.innerHTML = '';
+    return;
+  }
+
+  const job = orbitGetJob(jobId);
+
+  if(!job){
+    content.innerHTML =
+      '<div style="text-align:center;padding:3rem 1rem;">' +
+        '<h2 style="color:var(--ink-3);margin-bottom:8px;">Order Not Found</h2>' +
+        '<p style="color:var(--ink-light);">No order found with ID: <span class="mono" style="font-weight:600;">' + jobId + '</span></p>' +
+      '</div>';
+    fabContainer.innerHTML = '';
+    return;
+  }
+
+  const currentStageIdx = Math.min(job.stage, ORBIT_STAGES.length - 1);
+  const currentStage = ORBIT_STAGES[currentStageIdx];
+  const nextStageIdx = orbitNextStageIdx(job);
+  const nextStage = ORBIT_STAGES[nextStageIdx];
+  const sd = job.salesData || {};
+  const isInProduction = job.stage >= 3 && job.stage < 13;
+  const showUpdateButton = canUpdate && isInProduction;
+
+  /* ===== BUILD HTML ===== */
+  let html = '';
+
+  // Urgency banner
+  if(orbitIsUrgent(job.urgent)){
+    html += orbitImportantBanner(
+      job.urgent === "super-urgent" ? "SUPER URGENT — Prioritize this job immediately" : "URGENT ORDER",
+      job.urgent
+    );
+  }
+
+  // Job hero
+  html +=
+    '<div class="job-hero">' +
+      '<div class="jid">' + job.id + '</div>' +
+      '<div class="jclient">' + job.client + '</div>' +
+      '<div class="jproduct">' + (job.product || "—") + ' &middot; Qty: ' + (job.quantity ? job.quantity.toLocaleString() : "—") + '</div>' +
+    '</div>';
+
+  // Stages this order actually goes through (skipped ones are hidden)
+  const prodList = orbitJobStageList(job);
+  const shownStages = [0, 1, 2].concat(prodList).concat([13]);
+  const posInRoute = shownStages.indexOf(currentStageIdx);
+
+  // Current stage big indicator
+  html +=
+    '<div class="current-stage-big">' +
+      '<div class="csl-label">Currently At</div>' +
+      '<div class="csl-name">' + currentStage.name + '</div>' +
+      '<div class="csl-step">Step ' + (posInRoute + 1) + ' of ' + shownStages.length + '</div>' +
+    '</div>';
+
+  // Stage progress dots
+  html += '<div class="stage-strip-mobile">';
+  shownStages.forEach((stIdx, i) => {
+    let cls = "";
+    if(stIdx < currentStageIdx) cls = "done";
+    else if(stIdx === currentStageIdx) cls = "current";
+    html += '<div class="ssm-dot ' + cls + '" title="' + ORBIT_STAGES[stIdx].name + '">' + (i + 1) + '</div>';
+  });
+  html += '</div>';
+
+  // Order info card
+  html +=
+    '<div class="info-card">' +
+      '<h3>Order Information</h3>' +
+      '<div class="info-grid">' +
+        '<div class="info-item"><div class="lbl">Job ID</div><div class="val mono">' + job.id + '</div></div>' +
+        '<div class="info-item"><div class="lbl">Quantity</div><div class="val mono">' + (job.quantity ? job.quantity.toLocaleString() : "—") + '</div></div>' +
+        '<div class="info-item"><div class="lbl">Customer</div><div class="val">' + job.client + '</div></div>' +
+        '<div class="info-item"><div class="lbl">Deadline</div><div class="val">' + (job.deadline || "—") + '</div></div>' +
+        '<div class="info-item"><div class="lbl">Urgency</div><div class="val" style="color:' + (orbitIsUrgent(job.urgent) ? 'var(--urgent)' : 'var(--ink-3)') + ';">' +
+          (job.urgent ? job.urgent.charAt(0).toUpperCase() + job.urgent.slice(1) : "Normal") + '</div></div>' +
+        '<div class="info-item"><div class="lbl">Sales Person</div><div class="val">' + (job.salesPerson || "—") + '</div></div>' +
+      '</div>' +
+    '</div>';
+
+  // Sales specification card
+  if(sd.paperType || sd.colour || (sd.finishing && sd.finishing.length)){
+    html +=
+      '<div class="info-card">' +
+        '<h3>Production Specification</h3>' +
+        '<table class="spec-table">' +
+          '<tr><th style="width:30%;">Product</th><td>' + (job.product || "—") + '</td></tr>' +
+          '<tr><th>Paper Type</th><td>' + (sd.paperType || "—") + (sd.gsm ? ' · ' + sd.gsm + 'gsm' : '') + '</td></tr>' +
+          '<tr><th>Colour</th><td>' + (sd.colour || "—") + '</td></tr>' +
+          '<tr><th>Print Side</th><td>' + (sd.printSide || "—") + '</td></tr>' +
+          '<tr><th>Finishing</th><td>' + (sd.finishing && sd.finishing.length ? sd.finishing.join(", ") : "—") + '</td></tr>' +
+        '</table>' +
+      '</div>';
+  }
+
+  // Description
+  if(job.description){
+    html +=
+      '<div class="info-card">' +
+        '<h3>Description</h3>' +
+        '<p style="margin:0;font-size:13.5px;line-height:1.5;color:var(--ink-2);">' + job.description + '</p>' +
+      '</div>';
+  }
+
+  // Delivery info
+  if(job.deliveryData && job.deliveryData.trackingNo){
+    const dd = job.deliveryData;
+    html +=
+      '<div class="delivery-box">' +
+        '<h3>Delivery Information</h3>' +
+        '<div class="info-grid">' +
+          '<div class="info-item"><div class="lbl">Courier</div><div class="val">' + (dd.courier || "—") + '</div></div>' +
+          '<div class="info-item"><div class="lbl">Tracking No.</div><div class="val mono">' + dd.trackingNo + '</div></div>' +
+          (dd.doNumber ? '<div class="info-item full"><div class="lbl">Delivery Order</div><div class="val mono">' + dd.doNumber + '</div></div>' : '') +
+          (dd.dispatchedAt ? '<div class="info-item"><div class="lbl">Dispatched</div><div class="val mono" style="font-size:12px;">' + dd.dispatchedAt + '</div></div>' : '') +
+          (dd.deliveredAt ? '<div class="info-item"><div class="lbl">Delivered</div><div class="val mono" style="font-size:12px;color:var(--success-dark);">' + dd.deliveredAt + '</div></div>' : '') +
+        '</div>' +
+      '</div>';
+  }
+
+  // Production history
+  const historyItems = [];
+  if(job.createdAt){
+    historyItems.push({stage:"Sales", detail:"Order created" + (job.salesPerson ? " by " + job.salesPerson : ""), time:job.createdAt});
+  }
+  if(job.designData && job.designData.status === "approved"){
+    historyItems.push({stage:"Design", detail:"Design approved" + (job.designData.designer ? " by " + job.designData.designer : ""), time:"—"});
+  }
+  if(job.plannerData && job.plannerData.verified){
+    historyItems.push({stage:"Planner", detail:"Job Sheet verified" + (job.plannerData.verifiedBy ? " by " + job.plannerData.verifiedBy : ""), time:job.plannerData.verifiedAt || "—"});
+  }
+  if(job.productionHistory){
+    job.productionHistory.forEach(h => {
+      historyItems.push({
+        stage: h.stageName,
+        detail: (h.qty ? h.qty.toLocaleString() + " units" : "Completed") + 
+                (h.operator ? " by " + h.operator : "") +
+                (h.notes ? " — " + h.notes : ""),
+        time: h.timestamp,
+        photo: h.photo
+      });
+    });
+  }
+  if(job.deliveryData && job.deliveryData.status === "delivered"){
+    historyItems.push({stage:"Delivery", detail:"Delivered to customer", time:job.deliveryData.deliveredAt || "—"});
+  }
+
+  html +=
+    '<div class="info-card">' +
+      '<h3>Process History</h3>' +
+      '<div class="history-list">';
+  if(historyItems.length === 0){
+    html += '<p style="color:var(--ink-light);font-size:13px;margin:0;">No production history recorded yet.</p>';
+  } else {
+    historyItems.reverse().forEach(h => {
+      html +=
+        '<div class="history-item">' +
+          '<div class="hi-stage">' + h.stage + '</div>' +
+          '<div class="hi-body">' +
+            '<div class="hi-detail">' + h.detail + '</div>' +
+            '<div class="hi-time">' + h.time + '</div>' +
+          '</div>' +
+          (h.photo ? '<img class="hi-photo" src="' + h.photo + '" alt="Proof" onclick="viewPhoto(\'' + h.photo + '\')">' : '') +
+        '</div>';
+    });
+  }
+  html += '</div></div>';
+
+  content.innerHTML = html;
+
+  /* ===== FAB BUTTON ===== */
+  if(showUpdateButton){
+    // In production — anyone who scanned the QR can complete the stage (no login)
+    fabContainer.innerHTML =
+      '<button class="fab-btn" onclick="openStageUpdate()">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">' +
+          '<polyline points="20 6 9 17 4 12"/>' +
+        '</svg>' +
+        'Complete ' + currentStage.name + ' &rarr; ' + nextStage.name +
+      '</button>';
+  } else if(job.stage >= 13){
+    fabContainer.innerHTML = '<button class="fab-btn secondary" disabled>Job Completed / Delivered</button>';
+  } else {
+    fabContainer.innerHTML = '<button class="fab-btn secondary" disabled>Job not in production yet</button>';
+  }
+}
+
+/* ===== Photo viewer ===== */
+function viewPhoto(photoData){
+  const viewer = document.createElement("div");
+  viewer.className = "photo-viewer";
+  viewer.onclick = function(){ viewer.remove(); };
+  viewer.innerHTML =
+    '<button class="photo-viewer-close" onclick="this.parentElement.remove()">&times;</button>' +
+    '<img src="' + photoData + '" alt="Photo proof">';
+  document.body.appendChild(viewer);
+}
+
+/* ===== Stage Update Modal ===== */
+let currentPhotoProof = null;
+
+function workerNameDefault(){
+  if(currentUser && currentUser.name) return currentUser.name.replace(/"/g, "&quot;");
+  try { return (localStorage.getItem("orbit_worker_name") || "").replace(/"/g, "&quot;"); } catch(e){ return ""; }
+}
+
+function openStageUpdate(){
+  const job = orbitGetJob(jobId);
+  if(!job) return;
+  const currentStageIdx = Math.min(job.stage, ORBIT_STAGES.length - 1);
+  const nextStageIdx = orbitNextStageIdx(job);
+  const currentStage = ORBIT_STAGES[currentStageIdx];
+  const nextStage = ORBIT_STAGES[nextStageIdx];
+  currentPhotoProof = null;
+
+  const container = document.getElementById("modal-container");
+  container.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.innerHTML=\'\';}">' +
+      '<div class="modal-sheet">' +
+        '<button class="modal-close" onclick="orbitStopCamera();document.getElementById(\'modal-container\').innerHTML=\'\'">&times;</button>' +
+        '<h2>Complete Stage</h2>' +
+        '<div class="ms-sub"><strong style="color:var(--brand-red);">' + currentStage.name + '</strong> &rarr; ' + nextStage.name + '</div>' +
+
+        '<div style="background:var(--surface-alt);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;">' +
+          '<div style="font-size:11px;color:var(--ink-light);">Job</div>' +
+          '<div style="font-weight:700;font-family:var(--font-mono);">' + jobId + '</div>' +
+          '<div style="font-size:12px;color:var(--ink-3);margin-top:2px;">' + job.client + ' &middot; Qty: ' + (job.quantity ? job.quantity.toLocaleString() : "—") + '</div>' +
+        '</div>' +
+
+        '<label>Your Name <span class="req">*</span></label>' +
+        '<input type="text" id="update-worker" placeholder="Worker name" autocomplete="name" value="' + workerNameDefault() + '">' +
+
+        '<label>Photo Proof <span class="req">*</span></label>' +
+        '<div class="camera-box" id="camera-box">' +
+          '<div class="camera-placeholder">Tap Start Camera below or upload a photo</div>' +
+        '</div>' +
+
+        '<div class="camera-actions">' +
+          '<button type="button" onclick="startCamera()">Start Camera</button>' +
+          '<button type="button" class="primary" onclick="uploadPhoto()">Upload Photo</button>' +
+        '</div>' +
+        '<input type="file" id="photo-upload" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload()">' +
+
+        '<div id="capture-btn-wrap" style="display:none;width:100%;text-align:center;margin:8px 0 12px;">' +
+          '<button type="button" class="capture-btn" onclick="capturePhoto()" aria-label="Capture photo"></button>' +
+        '</div>' +
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+          '<div><label>Output Qty <span class="req">*</span></label>' +
+            '<input type="number" id="update-qty" placeholder="Qty" value="' + (job.quantity || "") + '" min="1">' +
+          '</div>' +
+          '<div><label>Rejected</label>' +
+            '<input type="number" id="update-rejected" placeholder="0" min="0" value="0">' +
+          '</div>' +
+        '</div>' +
+
+        '<label>Notes <span class="req">*</span></label>' +
+        '<textarea id="update-notes" placeholder="Describe work done, quality, any issues..."></textarea>' +
+
+        '<button class="submit-btn" onclick="submitStageUpdate()">' +
+          'Submit & Notify All Departments' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ===== Camera functions ===== */
+async function startCamera(){
+  const box = document.getElementById("camera-box");
+  if(!box) return;
+  box.innerHTML = '<video id="camera-video" autoplay playsinline style="width:100%;"></video>';
+  const video = document.getElementById("camera-video");
+  const started = await orbitStartCamera(video);
+  if(!started){
+    box.innerHTML = '<div class="camera-placeholder" style="color:var(--danger);">Camera access denied.<br>Use Upload Photo instead.</div>';
+    return;
+  }
+  document.getElementById("capture-btn-wrap").style.display = "block";
+}
+
+function capturePhoto(){
+  const video = document.getElementById("camera-video");
+  if(!video || !video.srcObject){
+    showToast("Start camera first", "warning");
+    return;
+  }
+  const canvas = document.createElement("canvas");
+  const photoData = orbitCapturePhoto(video, canvas);
+  currentPhotoProof = photoData;
+  orbitStopCamera();
+  const box = document.getElementById("camera-box");
+  if(box) box.innerHTML = '<img src="' + photoData + '" style="width:100%;display:block;border-radius:var(--radius);">';
+  document.getElementById("capture-btn-wrap").style.display = "none";
+  showToast("Photo captured", "success");
+}
+
+function uploadPhoto(){
+  document.getElementById("photo-upload").click();
+}
+
+async function handlePhotoUpload(){
+  const input = document.getElementById("photo-upload");
+  const photoData = await orbitHandleFileUpload(input);
+  if(photoData){
+    currentPhotoProof = photoData;
+    const box = document.getElementById("camera-box");
+    if(box) box.innerHTML = '<img src="' + photoData + '" style="width:100%;display:block;border-radius:var(--radius);">';
+    document.getElementById("capture-btn-wrap").style.display = "none";
+    showToast("Photo uploaded", "success");
+  }
+}
+
+/* ===== Submit Stage Update ===== */
+function submitStageUpdate(){
+  const qty = parseInt(document.getElementById("update-qty").value) || 0;
+  const rejected = parseInt(document.getElementById("update-rejected").value) || 0;
+  const notes = document.getElementById("update-notes").value.trim();
+  const workerName = document.getElementById("update-worker").value.trim();
+
+  if(!workerName){
+    showToast("Enter your name", "warning");
+    document.getElementById("update-worker").focus();
+    return;
+  }
+  if(qty <= 0){
+    showToast("Enter valid output quantity", "warning");
+    document.getElementById("update-qty").focus();
+    return;
+  }
+  if(!currentPhotoProof){
+    showToast("Photo proof is required", "warning");
+    return;
+  }
+  if(!notes){
+    showToast("Please add notes", "warning");
+    document.getElementById("update-notes").focus();
+    return;
+  }
+
+  const job = orbitGetJob(jobId);
+  const currentStageName = ORBIT_STAGES[job.stage] ? ORBIT_STAGES[job.stage].name : "Production";
+  const fullNotes = notes + (rejected > 0 ? " (Rejected: " + rejected + ")" : "");
+
+  orbitAdvanceStage(
+    jobId,
+    qty,
+    workerName,
+    fullNotes,
+    currentPhotoProof
+  );
+
+  try { localStorage.setItem("orbit_worker_name", workerName); } catch(e){}
+  showToast("Stage updated successfully!", "success");
+
+  orbitStopCamera();
+  document.getElementById("modal-container").innerHTML = "";
+
+  // Refresh view
+  setTimeout(function(){ renderJobView(); }, 400);
+}
+
+/* ===== Initialize ===== */
+orbitPullOnce().then(renderJobView).catch(function(){ renderJobView(); });
+</script>
+
+</body>
+</html>

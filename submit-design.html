@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Design · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.file-upload-area{
+  border:2.5px dashed var(--line);
+  border-radius:var(--radius-lg);
+  padding:2rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  background:var(--surface-alt);
+  margin-bottom:1rem;
+}
+.file-upload-area:hover{
+  border-color:var(--brand-red);
+  background:var(--brand-red-light);
+}
+.file-upload-area.has-file{
+  border-style:solid;
+  border-color:var(--success);
+  background:var(--success-bg);
+}
+.file-upload-area .upload-icon{
+  width:56px;
+  height:56px;
+  margin:0 auto 12px;
+  color:var(--ink-light);
+  transition:color 0.2s ease;
+}
+.file-upload-area:hover .upload-icon{color:var(--brand-red);}
+.file-upload-area.has-file .upload-icon{color:var(--success);}
+.file-upload-area .upload-text{
+  font-size:14px;
+  font-weight:600;
+  color:var(--ink-3);
+}
+.file-upload-area .upload-hint{
+  font-size:12px;
+  color:var(--ink-light);
+  margin-top:4px;
+}
+.file-upload-area .file-name-display{
+  font-family:var(--font-mono);
+  font-size:13px;
+  font-weight:600;
+  color:var(--success-dark);
+  margin-top:8px;
+  background:#fff;
+  padding:8px 14px;
+  border-radius:999px;
+  display:inline-block;
+}
+.submit-summary{
+  background:linear-gradient(135deg, var(--surface-alt) 0%, var(--paper-warm) 100%);
+  border-radius:var(--radius-lg);
+  padding:1.25rem 1.5rem;
+  border:1px solid var(--line);
+  margin-bottom:1.25rem;
+}
+.submit-summary h4{margin-bottom:0.75rem;}
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid var(--line);
+  font-size:13px;
+}
+.summary-row:last-child{border-bottom:none;}
+.summary-row .label{color:var(--ink-light);font-weight:500;}
+.summary-row .value{font-weight:600;color:var(--ink);}
+.summary-row .value.mono{font-family:var(--font-mono);}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Submit Design for Approval</h1>
+      <p class="page-desc">Upload the completed artwork files and confirm the finishing specifications before sending to Sales.</p>
+    </div>
+
+    <!-- Urgency Banner -->
+    <div id="sd-banner"></div>
+
+    <input type="hidden" id="sd-job">
+
+    <!-- ===== SECTION 1: Artwork Information ===== -->
+    <div class="card accent-top">
+      <h2 class="section-heading">Artwork Information</h2>
+
+      <div class="formgrid-3" style="margin-bottom:14px;">
+        <div>
+          <label>Design Name <span class="req">*</span></label>
+          <input type="text" id="sd-design-name" placeholder="e.g. Warung Pak Man — Menu Box v1" required>
+        </div>
+        <div>
+          <label>Client Name <span class="req">*</span></label>
+          <input type="text" id="sd-client-name" placeholder="Client / brand name" required>
+        </div>
+        <div>
+          <label>Brand Name</label>
+          <input type="text" id="sd-brand-name" placeholder="Brand name (if different from client)">
+        </div>
+      </div>
+
+      <div class="formgrid-3">
+        <div>
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="sd-date" required>
+        </div>
+        <div>
+          <label>Designer <span class="req">*</span></label>
+          <input type="text" id="sd-designer" readonly style="background:var(--surface-alt);font-weight:600;">
+        </div>
+        <div>
+          <label>Sales Person <span class="req">*</span></label>
+          <input type="text" id="sd-sales-person" placeholder="Sales person handling this job" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 2: Finishing Specifications ===== -->
+    <div class="card accent-top">
+      <h2 class="section-heading">Finishing / Lamination / Colour</h2>
+      <p class="note" style="margin-top:-0.5rem;margin-bottom:1.25rem;">
+        These specifications must match what Sales committed to the customer on the original order.
+      </p>
+
+      <div class="formgrid-3">
+        <div>
+          <label>Finishing <span class="req">*</span></label>
+          <select id="sd-finishing" required>
+            <option value="">Select finishing...</option>
+            <option value="Spot UV" selected>Spot UV</option>
+            <option value="Stamping">Stamping</option>
+            <option value="Emboss">Emboss</option>
+            <option value="Deboss">Deboss</option>
+            <option value="Spot UV + Stamping">Spot UV + Stamping</option>
+            <option value="None">None</option>
+          </select>
+        </div>
+        <div>
+          <label>Lamination <span class="req">*</span></label>
+          <select id="sd-lamination" required>
+            <option value="">Select lamination...</option>
+            <option value="Matte" selected>Matte</option>
+            <option value="Gloss">Gloss</option>
+            <option value="None">None</option>
+          </select>
+        </div>
+        <div>
+          <label>Colour Mode <span class="req">*</span></label>
+          <select id="sd-colour" required>
+            <option value="">Select colour...</option>
+            <option value="CMYK" selected>CMYK</option>
+            <option value="Pantone">Pantone</option>
+            <option value="1 Color">1 Color</option>
+            <option value="Black">Black</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SECTION 3: File Uploads ===== -->
+    <div class="preview-grid">
+      <!-- Die-Cut Upload -->
+      <div class="card accent-top">
+        <h2 class="section-heading">Die-Cut Artwork</h2>
+
+        <div class="file-upload-area" id="diecut-upload" onclick="triggerFileInput('diecut-file')">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="upload-text">Click to upload Die-Cut file</div>
+          <div class="upload-hint">PDF, AI, EPS, SVG — up to 50MB</div>
+          <input type="file" id="diecut-file" accept=".pdf,.ai,.eps,.svg" style="display:none;" onchange="handleFileUpload(this, 'diecut-upload', 'diecut-filename')">
+          <div class="file-name-display" id="diecut-filename" style="display:none;"></div>
+        </div>
+
+        <label>Die-Cut File Reference</label>
+        <input type="text" id="sd-diecut-file" class="file-input-accent" placeholder="e.g. warung-pakman-diecut-v1.pdf">
+      </div>
+
+      <!-- Final Design Upload -->
+      <div class="card accent-top">
+        <h2 class="section-heading">Final Design Artwork</h2>
+
+        <div class="file-upload-area" id="design-upload" onclick="triggerFileInput('design-file')">
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="upload-text">Click to upload Final Design file</div>
+          <div class="upload-hint">PDF, AI, EPS — print-ready, CMYK, 300dpi</div>
+          <input type="file" id="design-file" accept=".pdf,.ai,.eps" style="display:none;" onchange="handleFileUpload(this, 'design-upload', 'design-filename')">
+          <div class="file-name-display" id="design-filename" style="display:none;"></div>
+        </div>
+
+        <label>Final Design File Reference</label>
+        <input type="text" id="sd-final-file" class="file-input-accent" placeholder="e.g. warung-pakman-design-v1.pdf">
+      </div>
+    </div>
+
+    <!-- ===== SECTION 4: Submission Summary ===== -->
+    <div class="submit-summary" style="margin-top:1.5rem;">
+      <h4>Submission Summary</h4>
+      <div class="summary-row">
+        <span class="label">Job ID</span>
+        <span class="value mono" id="summary-job">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Designer</span>
+        <span class="value" id="summary-designer">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Finishing</span>
+        <span class="value" id="summary-finishing">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Lamination</span>
+        <span class="value" id="summary-lamination">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Colour</span>
+        <span class="value" id="summary-colour">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Files Attached</span>
+        <span class="value" id="summary-files">None</span>
+      </div>
+    </div>
+
+    <!-- Design Notes -->
+    <div style="margin-bottom:1.25rem;">
+      <label>Design Notes for Sales / Production</label>
+      <textarea id="sd-notes" rows="3" placeholder="Any special notes about this design, file versions, fonts used, or production considerations..."></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="job-actions" style="border-top:2px solid var(--line);padding-top:1.25rem;justify-content:flex-end;">
+      <button class="btn" onclick="location.href='designer.html'+location.search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Cancel &amp; Back to Jobs
+      </button>
+      <button class="btn btn-primary btn-lg" onclick="submitDesign()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <path d="m22 2-7 20-4-9-9-4 20-7Z"/>
+        </svg>
+        Submit to Sales for Approval
+      </button>
+    </div>
+
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("designer.html", "Order Intake · Design");
+
+if(__uid !== null){
+
+/* ===== Job lookup for pre-filling ===== */
+/* Real job pre-fill via live database */
+const sdParams = new URLSearchParams(location.search);
+const sdJob = sdParams.get("job") || "";
+const sdUrgent = sdParams.get("urgent") || "normal";
+
+document.getElementById("sd-job").value = sdJob;
+document.getElementById("summary-job").textContent = sdJob || "—";
+
+// Pre-fill user info
+const sdUser = ORBIT_USERS[__uid];
+document.getElementById("sd-designer").value = sdUser ? sdUser.name : "";
+document.getElementById("summary-designer").textContent = sdUser ? sdUser.name : "—";
+const sdJobData = orbitGetJob(sdJob) || null;
+document.getElementById("sd-sales-person").value = (sdJobData && sdJobData.salesPerson) || "";
+document.getElementById("sd-date").value = new Date().toISOString().slice(0, 10);
+
+// Pre-fill job info if available
+if(sdJobData){
+  document.getElementById("sd-client-name").value = sdJobData.client || "";
+  document.getElementById("sd-design-name").value = (sdJobData.designData && sdJobData.designData.designName) || "";
+  document.getElementById("sd-brand-name").value = sdJobData.client || "";
+}
+
+// Show urgency banner
+if(sdUrgent === "super-urgent"){
+  document.getElementById("sd-banner").innerHTML = orbitImportantBanner(sdJob + " is marked SUPER URGENT — double-check all specs before submitting.", "super-urgent");
+} else if(sdUrgent === "urgent"){
+  document.getElementById("sd-banner").innerHTML = orbitImportantBanner(sdJob + " is marked Urgent — confirm the finishing spec before submitting.");
+}
+
+/* ===== File Upload Handling ===== */
+function triggerFileInput(inputId){
+  document.getElementById(inputId).click();
+}
+
+function handleFileUpload(input, areaId, displayId){
+  const area = document.getElementById(areaId);
+  const display = document.getElementById(displayId);
+  if(input.files.length > 0){
+    area.classList.add("has-file");
+    display.textContent = input.files[0].name;
+    display.style.display = "inline-block";
+    updateFileSummary();
+  }
+}
+
+/* ===== Live Summary Update ===== */
+function updateSummary(){
+  document.getElementById("summary-finishing").textContent = document.getElementById("sd-finishing").value || "—";
+  document.getElementById("summary-lamination").textContent = document.getElementById("sd-lamination").value || "—";
+  document.getElementById("summary-colour").textContent = document.getElementById("sd-colour").value || "—";
+}
+
+function updateFileSummary(){
+  const diecut = document.getElementById("diecut-file").files.length > 0;
+  const design = document.getElementById("design-file").files.length > 0;
+  const diecutText = document.getElementById("sd-diecut-file").value.trim();
+  const designText = document.getElementById("sd-final-file").value.trim();
+
+  let files = [];
+  if(diecut || diecutText) files.push("Die-Cut");
+  if(design || designText) files.push("Final Design");
+
+  document.getElementById("summary-files").textContent = files.length > 0 ? files.join(" + ") : "None";
+}
+
+// Attach listeners for live summary
+["sd-finishing", "sd-lamination", "sd-colour"].forEach(id => {
+  document.getElementById(id).addEventListener("change", updateSummary);
+});
+["sd-diecut-file", "sd-final-file"].forEach(id => {
+  document.getElementById(id).addEventListener("input", updateFileSummary);
+});
+
+// Initial summary
+updateSummary();
+
+/* ===== Submit ===== */
+function submitDesign(){
+  const designName = document.getElementById("sd-design-name").value.trim();
+  const clientName = document.getElementById("sd-client-name").value.trim();
+  const finishing = document.getElementById("sd-finishing").value;
+  const lamination = document.getElementById("sd-lamination").value;
+  const colour = document.getElementById("sd-colour").value;
+
+  // Validation
+  if(!designName){
+    orbitToast("Please enter the Design Name", "warning");
+    document.getElementById("sd-design-name").focus();
+    return;
+  }
+  if(!clientName){
+    orbitToast("Please enter the Client Name", "warning");
+    document.getElementById("sd-client-name").focus();
+    return;
+  }
+  if(!finishing || !lamination || !colour){
+    orbitToast("Please select all finishing specifications", "warning");
+    return;
+  }
+
+  // Check for at least one file reference
+  const diecutFile = document.getElementById("sd-diecut-file").value.trim();
+  const finalFile = document.getElementById("sd-final-file").value.trim();
+  const diecutUploaded = document.getElementById("diecut-file").files.length > 0;
+  const designUploaded = document.getElementById("design-file").files.length > 0;
+
+  if(!diecutFile && !finalFile && !diecutUploaded && !designUploaded){
+    orbitToast("Please attach or reference at least one artwork file", "warning");
+    return;
+  }
+
+  const jobLabel = sdJob || designName;
+  orbitLogAction(jobLabel + ": artwork submitted to Sales (" + finishing + ", " + lamination + ", " + colour + ")", "success");
+
+  setTimeout(() => {
+    location.href = "designer.html" + location.search;
+  }, 800);
+}
+
+} // end auth check
+</script>
+
+</body>
+</html>

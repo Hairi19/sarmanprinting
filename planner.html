@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.paper-table{
+  width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;
+  background:var(--surface);border-radius:var(--radius);overflow:hidden;border:1.5px solid var(--line);
+}
+.paper-table th{
+  background:var(--surface-alt);padding:10px 8px;font-size:10.5px;
+  letter-spacing:0.05em;text-align:center;border-bottom:1.5px solid var(--line);white-space:nowrap;
+}
+.paper-table td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;}
+.paper-table tr:last-child td{border-bottom:none;}
+.paper-table .size-label{
+  font-family:var(--font-mono);font-size:12px;color:var(--ink-3);font-weight:700;
+  text-align:left;padding-left:12px;background:var(--surface-alt);min-width:110px;
+}
+.paper-table input{
+  margin-bottom:0;padding:7px 6px;font-size:12.5px;text-align:center;width:100%;min-width:60px;
+}
+.chevron-icon{
+  width:20px;height:20px;flex-shrink:0;color:var(--ink-light);
+  transition:transform 0.2s ease;padding:4px;border-radius:50%;background:var(--paper);
+}
+.planner-row.open .chevron-icon{
+  transform:rotate(180deg);color:var(--brand-red);background:var(--brand-red-light);
+}
+</style>
+
+<!-- Print Template (hidden, used by printJobSheet) -->
+<script type="text/template" id="print-jobsheet-template">
+<!DOCTYPE html>
+<html>
+<head>
+<title>Job Sheet — __JOBID__</title>
+<style>
+body{font-family:Arial,sans-serif;padding:20px;color:#000;font-size:12px;}
+h1{color:#C0272B;border-bottom:2px solid #000;padding-bottom:8px;margin:0 0 4px;font-size:20px;}
+.subtitle{color:#666;font-size:11px;font-style:italic;margin-bottom:16px;}
+.header-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.header-item{border:1px solid #999;padding:8px;border-radius:4px;}
+.header-item .lbl{font-size:10px;text-transform:uppercase;color:#666;font-weight:bold;margin-bottom:2px;}
+.header-item .val{font-weight:bold;font-size:13px;}
+.section{margin:16px 0;}
+.section h3{border-bottom:1.5px solid #333;padding-bottom:4px;margin:0 0 10px;font-size:14px;color:#C0272B;}
+table{width:100%;border-collapse:collapse;margin:8px 0;}
+th,td{border:1px solid #999;padding:6px 8px;text-align:left;font-size:11px;}
+th{background:#f0f0f0;font-weight:bold;}
+.verify{background:#E8F5E9;border:1px solid #A5D6A7;padding:8px;border-radius:4px;margin:8px 0;}
+.verify.ok{background:#C8E6C9;}
+.checkbox{display:inline-block;width:12px;height:12px;border:1.5px solid #333;margin-right:6px;vertical-align:middle;}
+.checked{background:#333;}
+.qr-section{text-align:center;margin:16px 0;padding:12px;border:2px dashed #999;border-radius:8px;}
+.qr-section img{width:120px;height:120px;}
+.sign-line{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+.sign-line div{border-top:1px solid #000;padding-top:4px;text-align:center;font-size:11px;}
+.footer{margin-top:24px;padding-top:10px;border-top:1px solid #999;font-size:10px;color:#666;display:flex;justify-content:space-between;}
+@media print{body{padding:0;}}
+</style>
+</head>
+<body>
+<h1>JOB SHEET — __JOBID__</h1>
+<div class="subtitle">Sarman Printing Sdn Bhd &middot; "Order Harini, Siap Semalam?" &middot; Printed: __PRINTED__</div>
+<div class="header-grid">
+  <div class="header-item"><div class="lbl">Customer</div><div class="val">__CLIENT__</div></div>
+  <div class="header-item"><div class="lbl">Product</div><div class="val">__PRODUCT__</div></div>
+  <div class="header-item"><div class="lbl">Quantity</div><div class="val">__QTY__ units</div></div>
+  <div class="header-item"><div class="lbl">Deadline</div><div class="val">__DEADLINE__</div></div>
+  <div class="header-item"><div class="lbl">Urgency</div><div class="val">__URGENCY__</div></div>
+  <div class="header-item"><div class="lbl">Sales Person</div><div class="val">__SALES__</div></div>
+</div>
+<div class="qr-section">
+  <img src="__QRURL__" alt="QR __JOBID__"><br>
+  <strong>__JOBID__</strong><br>
+  <span style="font-size:10px;color:#666;">Scan to track order progress</span>
+</div>
+<div class="section">
+  <h3>Sales Data Verification</h3>
+  <table>
+    <tr><th>Paper Type</th><th>GSM</th><th>Colour</th><th>Print Side</th><th>Finishing</th></tr>
+    <tr><td>__PAPER__</td><td>__GSM__</td><td>__COLOUR__</td><td>__PRINTSIDE__</td><td>__FINISHING__</td></tr>
+  </table>
+  <div class="verify __VERIFYSALESCLASS__">
+    <span class="checkbox __VERIFYSALESCHECK__"></span>
+    Sales data verified by Planner
+  </div>
+</div>
+<div class="section">
+  <h3>Design Data Verification</h3>
+  <table>
+    <tr><th>Designer</th><th>Status</th></tr>
+    <tr><td>__DESIGNER__</td><td>__DESIGNSTATUS__</td></tr>
+  </table>
+  <div class="verify __VERIFYDESIGNCLASS__">
+    <span class="checkbox __VERIFYDESIGNCHECK__"></span>
+    Design artwork verified as print-ready
+  </div>
+</div>
+<div class="section">
+  <h3>Planner Production Details</h3>
+  <p style="color:#666;font-size:11px;margin:0;">Fill in by hand from the ORBIT system before sending to factory floor.</p>
+</div>
+<div class="sign-line">
+  <div>Planner Signature & Date</div>
+  <div>Production Received By & Date</div>
+</div>
+<div class="footer">
+  <span>ORBIT Job Sheet v2.0</span>
+  <span>__JOBID__</span>
+  <span>Page 1 of 1</span>
+</div>
+</script>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Planner — Job Sheet Creation</h1>
+      <p class="page-desc">
+        <strong>Form 4 of 4.</strong> Review Sales & Design data (read-only), verify, then fill in the remaining production details.
+        Print the completed job sheet for the factory floor.
+      </p>
+    </div>
+
+    <div class="card accent-top">
+      <h2 style="margin-bottom:0.5rem;">Job Orders Waiting for Job Sheet</h2>
+      <p class="note" style="margin-top:0.5rem;margin-bottom:1.1rem;">
+        Click a job row to expand. <strong>Sales fields are locked</strong> — tick the verification boxes to confirm you've reviewed them, then fill in the production planning details.
+      </p>
+      <div id="planner-list"></div>
+    </div>
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("planner.html", "Job Sheet · Planner");
+
+if(__uid !== null){
+
+const JS_PRODUCT_FINISHING = ["Gloss Lamination", "Matt Lamination", "Varnish / Waterbase", "UV", "Sand Blast"];
+const JS_DIECUT = ["Die Cut", "Perforation Line", "Creasing Line", "Cut to Size", "Folding"];
+const JS_OTHERS = ["Spot UV", "PVC Window", "Emboss", "Hot Stamping"];
+const JS_BLOCK = ["Die Cut Block", "Hot Stamping Block", "Emboss Block", "Spot UV Film"];
+const JS_PRODUCT = ["Box", "Paperbag", "Flyer", "Card", "Book", "Sticker", "Other"];
+const JS_COLOR = ["CMYK", "Black", "White Base", "Pantone"];
+const JS_ORIENTATION = ["Single Side", "Work & Tumble", "Work & Turn", "Front & Back", "Other"];
+const PAPER_SIZES = ['25" x 35.5"', '25" x 37"', '31" x 43"'];
+const CTP_SIZES = ["1030 x 800", "915 x 715", "910 x 665", "525 x 459", "730 x 600"];
+
+function jsCheckGroup(name, items, prefix){
+  var html = '<div class="checkrow">';
+  for(var i = 0; i < items.length; i++){
+    html += '<label class="chk"><input type="checkbox" name="' + prefix + name + '" value="' + items[i] + '"> ' + items[i] + '</label>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function paperTypeTable(prefix){
+  var html = '<table class="paper-table"><thead><tr>' +
+    '<th style="text-align:left;padding-left:12px;">Paper Size</th>' +
+    '<th>Paper Type</th><th>GSM</th><th>Ream/Pkt</th><th>Cut</th><th>Cut Size</th><th>Qty After Cut</th>' +
+    '</tr></thead><tbody>';
+  for(var i = 0; i < PAPER_SIZES.length; i++){
+    var size = PAPER_SIZES[i];
+    html += '<tr>' +
+      '<td class="size-label">' + size + '</td>' +
+      '<td><input type="text" name="' + prefix + 'paper-type-' + i + '" placeholder="Art card"></td>' +
+      '<td><input type="number" name="' + prefix + 'gsm-' + i + '" placeholder="300" min="0"></td>' +
+      '<td><input type="number" name="' + prefix + 'ream-' + i + '" placeholder="1" min="0"></td>' +
+      '<td><input type="text" name="' + prefix + 'cut-' + i + '" placeholder="Cut spec"></td>' +
+      '<td><input type="text" name="' + prefix + 'cut-size-' + i + '" placeholder="e.g. A4"></td>' +
+      '<td><input type="number" name="' + prefix + 'qty-' + i + '" placeholder="0" min="0"></td>' +
+    '</tr>';
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+var chevronSVG = '<svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="6 9 12 15 18 9"/></svg>';
+
+function renderPlannerList(){
+  var el = document.getElementById("planner-list");
+  var jobs = orbitGetJobs().filter(function(j){
+    return j.stage === 2 || (j.stage <= 2 && !j.plannerData || !j.plannerData.verified);
+  });
+
+  if(jobs.length === 0){
+    el.innerHTML =
+      '<div style="text-align:center;padding:3rem 1rem;">' +
+        '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" stroke-width="1.5" style="margin-bottom:12px;opacity:0.5;">' +
+          '<path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>' +
+        '</svg>' +
+        '<p style="color:var(--ink-light);font-weight:600;">All caught up!</p>' +
+        '<p style="color:var(--ink-muted);font-size:13px;margin-top:4px;">No job orders waiting on a job sheet right now.</p>' +
+      '</div>';
+    return;
+  }
+
+  var html = '';
+  for(var ji = 0; ji < jobs.length; ji++){
+    var j = jobs[ji];
+    var isUrgent = orbitIsUrgent(j.urgent);
+    var safeId = j.id.replace(/[^A-Za-z0-9]/g, "");
+    var urgencyClass = j.urgent === "super-urgent" ? " super-urgent" : (isUrgent ? " important" : "");
+    var sd = j.salesData || {};
+    var dd = j.designData || {};
+
+    html += '<div class="job-card orbit-filterable planner-row' + urgencyClass + '" id="row-' + safeId + '"' +
+      ' data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
+
+      '<div class="planner-head" onclick="togglePlanner(\'' + safeId + '\')">' +
+        '<div style="min-width:0;">' +
+          '<div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
+          '<div class="job-client">' + j.client + ' &middot; <span class="deadline-tag">Deadline ' + (j.deadline || "—") + '</span></div>' +
+          '<div class="job-client" style="margin-top:4px;font-size:12px;">' + (j.product || "—") + ' &middot; Qty: ' + (j.quantity ? j.quantity.toLocaleString() : "—") + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">' +
+          '<span class="badge badge-waiting">Needs Job Sheet</span>' + chevronSVG +
+        '</div>' +
+      '</div>' +
+
+      '<div class="planner-body" id="body-' + safeId + '"><div class="planner-body-inner">' +
+
+        (isUrgent ? orbitImportantBanner(
+          j.urgent === "super-urgent" ? 'SUPER URGENT JOB — double-check every field.' : 'Important job — verify against approved artwork.',
+          j.urgent
+        ) : '') +
+
+        '<div class="verify-section">' +
+          '<h4>Verify Sales Data <span class="readonly-label">Read-only</span></h4>' +
+          '<div class="formgrid-3" style="margin-bottom:10px;">' +
+            '<div><label>Customer</label><input type="text" value="' + (j.client || "").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+            '<div><label>Product</label><input type="text" value="' + (j.product || "—").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+            '<div><label>Quantity</label><input type="text" value="' + (j.quantity ? j.quantity.toLocaleString() : "—") + '" class="readonly-field mono" readonly></div>' +
+            '<div><label>Paper Type</label><input type="text" value="' + (sd.paperType || "—").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+            '<div><label>GSM</label><input type="text" value="' + (sd.gsm || "—") + '" class="readonly-field mono" readonly></div>' +
+            '<div><label>Colour</label><input type="text" value="' + (sd.colour || "—").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+          '</div>' +
+          '<div style="margin-bottom:8px;"><label>Finishing Spec</label>' +
+            '<input type="text" value="' + (sd.finishing && sd.finishing.length ? sd.finishing.join(", ") : "None specified").replace(/"/g, "&quot;") + '" class="readonly-field" readonly>' +
+          '</div>' +
+          '<label class="chk" style="padding:8px 12px;background:#fff;border-radius:8px;border:1.5px solid #C8E6C9;">' +
+            '<input type="checkbox" id="' + safeId + '-verify-sales"> I have verified the Sales data against the original order form' +
+          '</label>' +
+        '</div>' +
+
+        '<div class="verify-section" style="margin-top:1rem;">' +
+          '<h4>Verify Design Data <span class="readonly-label">Read-only</span></h4>' +
+          '<div class="formgrid-2">' +
+            '<div><label>Designer</label><input type="text" value="' + (dd.designer || "—").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+            '<div><label>Design Status</label><input type="text" value="' + (dd.status || "—").replace(/"/g, "&quot;") + '" class="readonly-field" readonly></div>' +
+          '</div>' +
+          '<label class="chk" style="margin-top:10px;padding:8px 12px;background:#fff;border-radius:8px;border:1.5px solid #C8E6C9;">' +
+            '<input type="checkbox" id="' + safeId + '-verify-design"> I have verified the Design artwork is approved and print-ready' +
+          '</label>' +
+        '</div>' +
+
+        '<div style="display:flex;align-items:center;gap:16px;margin:1.25rem 0;padding:14px;background:var(--surface-alt);border-radius:var(--radius);border:1px solid var(--line);flex-wrap:wrap;">' +
+          orbitQRImageTag(j.id, 80, "qr-code") +
+          '<div>' +
+            '<div style="font-weight:700;color:var(--ink);">' + j.id + ' QR Code</div>' +
+            '<div style="font-size:12px;color:var(--ink-light);margin-top:2px;">This QR travels with the job. Production scans to update stages with photo proof.</div>' +
+            '<a href="qr-view.html?job=' + encodeURIComponent(j.id) + '" target="_blank" style="font-size:12px;">Open public tracking page &rarr;</a>' +
+          '</div>' +
+        '</div>' +
+
+        '<h4 style="margin:1.25rem 0 0.75rem;color:var(--brand-red);">Job Sheet — Production Details</h4>' +
+
+        '<div class="planner-header-info">' +
+          '<div class="formgrid-3">' +
+            '<div><label style="margin-bottom:3px;">Sale Person</label><span style="font-weight:600;">' + (j.salesPerson || "—") + '</span></div>' +
+            '<div><label style="margin-bottom:3px;">Order Date</label><span class="mono">' + (j.createdAt ? j.createdAt.split(",")[0] : "—") + '</span></div>' +
+            '<div><label style="margin-bottom:3px;">Delivery Date</label><span class="mono">' + (j.deadline || "—") + '</span></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<h4 style="margin:1rem 0 0.75rem;color:var(--ink-3);">Paper Type Specification</h4>' +
+        paperTypeTable(safeId + "-") +
+
+        '<div style="margin-bottom:1rem;">' +
+          '<label>Plate CTP Size</label>' +
+          '<select name="' + safeId + '-ctp">' +
+            '<option value="">Select CTP plate size...</option>' +
+            CTP_SIZES.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join("") +
+          '</select>' +
+        '</div>' +
+
+        '<fieldset class="orbit-fieldset"><legend>Product Finishing</legend>' + jsCheckGroup("product-finishing", JS_PRODUCT_FINISHING, safeId + "-") + '</fieldset>' +
+        '<fieldset class="orbit-fieldset"><legend>Die-Cut Operations</legend>' + jsCheckGroup("diecut", JS_DIECUT, safeId + "-") + '</fieldset>' +
+        '<fieldset class="orbit-fieldset"><legend>Others Finishing</legend>' + jsCheckGroup("others", JS_OTHERS, safeId + "-") + '</fieldset>' +
+        '<fieldset class="orbit-fieldset"><legend>Block / Film Required</legend>' + jsCheckGroup("block", JS_BLOCK, safeId + "-") + '</fieldset>' +
+
+        '<div class="formgrid-2">' +
+          '<fieldset class="orbit-fieldset"><legend>Product Printing Type</legend>' + jsCheckGroup("product", JS_PRODUCT, safeId + "-") + '</fieldset>' +
+          '<fieldset class="orbit-fieldset"><legend>Colour Mode</legend>' +
+            '<div class="radio-group">' + JS_COLOR.map(function(c, i){
+              return '<label class="radio-option"><input type="radio" name="' + safeId + '-colour" value="' + c + '"' + (i === 0 ? ' checked' : '') + '> ' + c + '</label>';
+            }).join("") + '</div>' +
+          '</fieldset>' +
+        '</div>' +
+
+        '<fieldset class="orbit-fieldset"><legend>Print Orientation</legend>' +
+          '<div class="radio-group">' + JS_ORIENTATION.map(function(o, i){
+            return '<label class="radio-option"><input type="radio" name="' + safeId + '-orientation" value="' + o + '"' + (i === 0 ? ' checked' : '') + '> ' + o + '</label>';
+          }).join("") + '</div>' +
+        '</fieldset>' +
+
+        '<fieldset class="orbit-fieldset">' +
+          '<legend>Booklet Details <span style="color:var(--ink-light);font-weight:400;text-transform:none;letter-spacing:normal;">(if applicable)</span></legend>' +
+          '<div class="formgrid-3" style="margin-bottom:12px;">' +
+            '<div><label>Total Pages (Cover)</label><input type="number" name="' + safeId + '-pages-cover" placeholder="e.g. 4" min="0"></div>' +
+            '<div><label>Total Pages (Text)</label><input type="number" name="' + safeId + '-pages-text" placeholder="e.g. 32" min="0"></div>' +
+            '<div><label>Total Section</label><input type="number" name="' + safeId + '-section" placeholder="e.g. 4" min="0"></div>' +
+          '</div>' +
+          '<label>Binding Type</label>' +
+          '<div class="checkrow">' +
+            ['Stapler Binding', 'Wire O', 'Perfect Binding', 'Folding', 'Other'].map(function(b){
+              return '<label class="chk"><input type="checkbox" name="' + safeId + '-binding" value="' + b + '"> ' + b + '</label>';
+            }).join("") +
+          '</div>' +
+        '</fieldset>' +
+
+        '<div style="margin-top:0.5rem;">' +
+          '<label>Remarks / Special Instructions for Production</label>' +
+          '<textarea name="' + safeId + '-remarks" rows="3" placeholder="Machine settings, quality requirements, special handling..."></textarea>' +
+        '</div>' +
+
+        '<div class="job-actions" style="margin-top:1.25rem;justify-content:flex-start;">' +
+          '<button class="print-btn" onclick="printJobSheet(\'' + safeId + '\',\'' + j.id + '\')">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+              '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>' +
+            '</svg>Print Job Sheet' +
+          '</button>' +
+          '<button class="btn btn-primary btn-lg" onclick="saveJobSheet(\'' + j.id + '\',\'' + safeId + '\')">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">' +
+              '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/>' +
+            '</svg>Save & Send to Production' +
+          '</button>' +
+        '</div>' +
+
+      '</div></div>' +
+    '</div>';
+  }
+
+  el.innerHTML = html;
+  orbitApplyFilters();
+}
+
+function togglePlanner(safeId){
+  document.getElementById("row-" + safeId).classList.toggle("open");
+}
+
+/* ===== Print Job Sheet — uses hidden template ===== */
+function printJobSheet(safeId, jobId){
+  var job = orbitGetJob(jobId);
+  if(!job) return;
+
+  var verifySales = document.getElementById(safeId + '-verify-sales') ? document.getElementById(safeId + '-verify-sales').checked : false;
+  var verifyDesign = document.getElementById(safeId + '-verify-design') ? document.getElementById(safeId + '-verify-design').checked : false;
+  var sd = job.salesData || {};
+  var dd = job.designData || {};
+
+  var template = document.getElementById('print-jobsheet-template').textContent;
+
+  var replacements = {
+    '__JOBID__': jobId,
+    '__PRINTED__': orbitNow(),
+    '__CLIENT__': job.client || "—",
+    '__PRODUCT__': job.product || "—",
+    '__QTY__': job.quantity ? job.quantity.toLocaleString() : "—",
+    '__DEADLINE__': job.deadline || "—",
+    '__URGENCY__': job.urgent || "normal",
+    '__SALES__': job.salesPerson || "—",
+    '__QRURL__': orbitGenerateQRUrl(jobId, 150),
+    '__PAPER__': sd.paperType || "—",
+    '__GSM__': sd.gsm || "—",
+    '__COLOUR__': sd.colour || "—",
+    '__PRINTSIDE__': sd.printSide || "—",
+    '__FINISHING__': sd.finishing && sd.finishing.length ? sd.finishing.join(", ") : "—",
+    '__VERIFYSALESCLASS__': verifySales ? 'ok' : '',
+    '__VERIFYSALESCHECK__': verifySales ? 'checked' : '',
+    '__DESIGNER__': dd.designer || "—",
+    '__DESIGNSTATUS__': dd.status || "—",
+    '__VERIFYDESIGNCLASS__': verifyDesign ? 'ok' : '',
+    '__VERIFYDESIGNCHECK__': verifyDesign ? 'checked' : ''
+  };
+
+  for(var key in replacements){
+    if(replacements.hasOwnProperty(key)){
+      template = template.split(key).join(replacements[key]);
+    }
+  }
+
+  var printWindow = window.open('', '_blank');
+  if(!printWindow){ orbitToast("Please allow pop-ups to print", "warning"); return; }
+
+  template += "<\/body><\/html>";
+  printWindow.document.write(template);
+  printWindow.document.close();
+  setTimeout(function(){ printWindow.print(); }, 500);
+}
+
+/* ===== Save Job Sheet ===== */
+function saveJobSheet(jobId, safeId){
+  var verifySales = document.getElementById(safeId + '-verify-sales');
+  var verifyDesign = document.getElementById(safeId + '-verify-design');
+
+  if(!verifySales || !verifySales.checked){
+    orbitToast("Please verify Sales data before saving", "warning");
+    if(verifySales) verifySales.focus();
+    return;
+  }
+  if(!verifyDesign || !verifyDesign.checked){
+    orbitToast("Please verify Design artwork before saving", "warning");
+    if(verifyDesign) verifyDesign.focus();
+    return;
+  }
+
+  var user = ORBIT_USERS[__uid];
+
+  var __jobNow = orbitGetJob(jobId);
+  var __firstStage = orbitFirstProdStageIdx(__jobNow);
+  orbitUpdateJob(jobId, {
+    stage: __firstStage,
+    stageName: ORBIT_STAGES[__firstStage].name,
+    status: "progress",
+    statusLabel: "In Production",
+    plannerData: {
+      verified: true,
+      verifiedBy: user ? user.name : "Planner",
+      verifiedAt: orbitNow()
+    }
+  });
+
+  orbitLogAction(jobId + ": Job Sheet saved — sent to " + ORBIT_STAGES[__firstStage].name, "success");
+
+  orbitNotifyDepartments(
+    jobId,
+    orbitGetJob(jobId) ? orbitGetJob(jobId).client : "",
+    __firstStage,
+    jobId + ": Job Sheet approved by Planner — ready for " + ORBIT_STAGES[__firstStage].name,
+    ["production.html", "log-output.html"]
+  );
+
+  renderPlannerList();
+}
+
+/* ===== Initialize ===== */
+renderPlannerList();
+
+} // end auth check
+</script>
+
+</body>
+</html>

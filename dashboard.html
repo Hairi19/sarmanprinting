@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+@media (max-width:1024px){
+  #workflow-overview{grid-template-columns:repeat(2,1fr) !important;}
+  #health-row{grid-template-columns:repeat(2,1fr) !important;}
+  .split-2{grid-template-columns:1fr !important;}
+}
+@media (max-width:560px){
+  #workflow-overview{grid-template-columns:1fr !important;}
+  #health-row{grid-template-columns:1fr !important;}
+}
+.mini-list{display:flex;flex-direction:column;gap:2px;}
+.mini-row{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;
+}
+.mini-row:last-child{border-bottom:none;}
+.mini-row .mr-name{font-weight:600;color:var(--ink);}
+.mini-row .mr-sub{font-size:11.5px;color:var(--ink-light);}
+.mini-row .mr-value{font-family:var(--font-mono);font-weight:600;color:var(--ink-2);white-space:nowrap;}
+.bar-row{display:flex;align-items:center;gap:10px;padding:5px 0;}
+.bar-row .br-label{width:88px;flex-shrink:0;font-size:11.5px;color:var(--ink-light);font-weight:600;}
+.bar-row .br-track{flex:1;height:9px;background:var(--paper-warm);border-radius:999px;overflow:hidden;}
+.bar-row .br-fill{height:100%;border-radius:999px;}
+.bar-row .br-count{width:22px;text-align:right;flex-shrink:0;font-size:12px;font-family:var(--font-mono);font-weight:700;color:var(--ink-2);}
+.alert-list{display:flex;flex-direction:column;gap:8px;}
+.alert-row{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--radius);
+  font-size:12.5px;font-weight:600;border:1.5px solid #FFCC80;background:var(--urgent-bg);color:var(--urgent-dark);
+}
+.alert-row.sev-high{background:var(--super-urgent-bg);border-color:#EF9A9A;color:var(--danger-dark);}
+.alert-row .al-job{font-family:var(--font-mono);font-weight:700;}
+.alert-row .al-reason{font-weight:500;color:var(--ink-3);margin-top:2px;}
+.bottleneck-banner{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius-lg);
+  background:var(--warning-bg);border:1.5px solid #FFCC80;color:var(--warning-dark);
+  font-size:13px;font-weight:600;margin-bottom:1.25rem;
+}
+.bottleneck-banner.ok{background:var(--success-bg);border-color:#A5D6A7;color:var(--success-dark);}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Management Dashboard</h1>
+      <p class="page-desc">Company-wide overview of orders, production stages, and business performance.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+      <button class="tab" data-tab="sales" onclick="switchTab('sales')">Sales</button>
+      <button class="tab" data-tab="production" onclick="switchTab('production')">Production</button>
+      <button class="tab" data-tab="delivery" onclick="switchTab('delivery')">Delivery</button>
+      <button class="tab" data-tab="finance" onclick="switchTab('finance')">Finance</button>
+      <button class="tab" data-tab="staff" onclick="switchTab('staff')">Staff</button>
+      <button class="tab" data-tab="activity" onclick="switchTab('activity')">Activity Log</button>
+    </div>
+
+    <!-- OVERVIEW TAB — Director's View: the single-page command center -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Total Orders</div><div class="m-value" id="ov-total">0</div></div>
+        <div class="metric"><div class="m-label">In Production</div><div class="m-value" id="ov-prod" style="color:var(--brand-red);">0</div></div>
+        <div class="metric"><div class="m-label">Urgent</div><div class="m-value" id="ov-urgent" style="color:var(--urgent);">0</div></div>
+        <div class="metric"><div class="m-label">Delivered</div><div class="m-value" id="ov-delivered" style="color:var(--success);">0</div></div>
+      </div>
+
+      <!-- Urgent Job Action Panel -->
+      <div id="alert-panel-wrap"></div>
+
+      <!-- Business Health — leading + lagging indicators at a glance -->
+      <div class="grid-4" id="health-row" style="margin-bottom:1.5rem;">
+        <div class="metric">
+          <div class="m-label">Revenue (This Month)</div>
+          <div class="m-value" id="health-revenue" style="font-size:22px;">RM 0</div>
+          <div id="health-revenue-spark" style="margin-top:6px;"></div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Gross Margin</div>
+          <div class="m-value" id="health-margin" style="color:var(--success);">0%</div>
+          <div class="m-sub" id="health-margin-sub">across priced orders</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">On-Time Delivery</div>
+          <div class="m-value" id="health-ontime" style="color:var(--info);">0%</div>
+          <div class="m-sub" id="health-ontime-sub">of completed deliveries</div>
+        </div>
+        <div class="metric">
+          <div class="m-label">Bottleneck Stage</div>
+          <div class="m-value" id="health-bottleneck" style="color:var(--warning);font-size:20px;">—</div>
+          <div class="m-sub" id="health-bottleneck-sub">busiest stage right now</div>
+        </div>
+      </div>
+
+      <!-- Workflow Summary — Boss high-level view -->
+      <div class="card accent-top" style="margin-bottom:1.5rem;">
+        <h2 style="margin-bottom:0.5rem;">Workflow Summary</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Overall order flow across the business. For detailed stage breakdown, see the <strong>Production</strong> tab.</p>
+        <div id="workflow-overview" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;"></div>
+      </div>
+
+      <!-- Top Clients + Sales Pipeline -->
+      <div class="split-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+        <div class="card accent-top" style="margin-bottom:0;">
+          <h2 style="margin-bottom:0.5rem;">Top Clients by Revenue</h2>
+          <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">Highest-value clients across all priced orders.</p>
+          <div class="mini-list" id="ov-top-clients"></div>
+        </div>
+        <div class="card accent-top" style="margin-bottom:0;">
+          <h2 style="margin-bottom:0.5rem;">Sales Pipeline</h2>
+          <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">Orders still at Order Intake — not yet in production.</p>
+          <div id="ov-pipeline"></div>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="card accent-top">
+        <h2 style="margin-bottom:0.5rem;">Recent Orders</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Latest orders across all departments.</p>
+        <table>
+          <thead>
+            <tr><th>Job ID</th><th>Client</th><th>Product</th><th>Qty</th><th>Stage</th><th>Status</th><th>Deadline</th></tr>
+          </thead>
+          <tbody id="recent-orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALES TAB -->
+    <div class="tab-content" id="tab-sales">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Open Orders</div><div class="m-value" id="sales-open">0</div></div>
+        <div class="metric"><div class="m-label">Awaiting Design</div><div class="m-value" id="sales-design" style="color:var(--info);">0</div></div>
+        <div class="metric"><div class="m-label">This Month Revenue</div><div class="m-value" id="sales-revenue" style="color:var(--success);">RM 0</div></div>
+        <div class="metric"><div class="m-label">Pipeline Value</div><div class="m-value" id="sales-pipeline" style="color:var(--warning);">RM 0</div><div class="m-sub" id="sales-conversion-sub">— quote-to-order conversion</div></div>
+      </div>
+
+      <div class="split-2" style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+        <div class="card accent-top" style="margin-bottom:0;">
+          <h2 style="margin-bottom:0.5rem;">Top 5 Clients</h2>
+          <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">By total order value.</p>
+          <div class="mini-list" id="sales-top-clients"></div>
+        </div>
+        <div class="card accent-top" style="margin-bottom:0;">
+          <h2 style="margin-bottom:0.5rem;">Sales by Salesperson</h2>
+          <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">Order count and value per rep.</p>
+          <div class="mini-list" id="sales-by-person"></div>
+        </div>
+      </div>
+
+      <div class="card accent-top">
+        <h2 style="margin-bottom:0.5rem;">Sales Orders</h2>
+        <table>
+          <thead>
+            <tr><th>Job ID</th><th>Client</th><th>Product</th><th>Qty</th><th>Price</th><th>Margin</th><th>Sales Person</th><th>Stage</th></tr>
+          </thead>
+          <tbody id="sales-orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCTION TAB -->
+    <div class="tab-content" id="tab-production">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Active Jobs</div><div class="m-value" id="prod-active">0</div></div>
+        <div class="metric"><div class="m-label">At Cutter</div><div class="m-value" id="prod-cutter">0</div></div>
+        <div class="metric"><div class="m-label">At Printing</div><div class="m-value" id="prod-printing">0</div></div>
+        <div class="metric"><div class="m-label">At Final QC</div><div class="m-value" id="prod-qc">0</div></div>
+      </div>
+
+      <div id="bottleneck-banner-wrap"></div>
+
+      <div class="card accent-top" style="margin-bottom:1.5rem;">
+        <h2 style="margin-bottom:0.5rem;">Stage Load</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Active job count at every production stage — a quick view of where work is piling up.</p>
+        <div id="stage-load"></div>
+      </div>
+
+      <div class="card accent-top">
+        <h2 style="margin-bottom:0.5rem;">Production Floor Status</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">All orders currently in production with their current stage.</p>
+        <div id="prod-status-list"></div>
+      </div>
+    </div>
+
+    <!-- DELIVERY TAB -->
+    <div class="tab-content" id="tab-delivery">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Awaiting Dispatch</div><div class="m-value" id="del-pending">0</div></div>
+        <div class="metric"><div class="m-label">In Transit</div><div class="m-value" id="del-transit" style="color:var(--info);">0</div></div>
+        <div class="metric"><div class="m-label">Delivered</div><div class="m-value" id="del-done" style="color:var(--success);">0</div></div>
+        <div class="metric"><div class="m-label">Overdue</div><div class="m-value" id="del-overdue" style="color:var(--danger);">0</div></div>
+      </div>
+
+      <div class="card accent-top" style="margin-bottom:1.5rem;">
+        <h2 style="margin-bottom:0.5rem;">Courier Performance</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">Jobs handled per courier across dispatched and delivered orders.</p>
+        <div class="mini-list" id="courier-performance"></div>
+      </div>
+
+      <div class="card accent-top">
+        <h2 style="margin-bottom:0.5rem;">Delivery Status</h2>
+        <table>
+          <thead>
+            <tr><th>Job ID</th><th>Client</th><th>Courier</th><th>Tracking No.</th><th>DO Number</th><th>Status</th><th>Dispatched</th></tr>
+          </thead>
+          <tbody id="delivery-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FINANCE TAB -->
+    <div class="tab-content" id="tab-finance">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Total Revenue</div><div class="m-value" id="fin-revenue" style="color:var(--success);">RM 0</div></div>
+        <div class="metric"><div class="m-label">Total Cost</div><div class="m-value" id="fin-cost" style="color:var(--danger);">RM 0</div></div>
+        <div class="metric"><div class="m-label">Estimated Profit</div><div class="m-value" id="fin-profit" style="color:var(--brand-red);">RM 0</div></div>
+        <div class="metric"><div class="m-label">Gross Margin</div><div class="m-value" id="fin-margin" style="color:var(--info);">0%</div></div>
+      </div>
+      <div class="card accent-top" style="margin-bottom:1.5rem;">
+        <h2 style="margin-bottom:0.5rem;">Order Financials</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Jobs below 15% margin are flagged for review.</p>
+        <table>
+          <thead>
+            <tr><th>Job ID</th><th>Client</th><th>Qty</th><th>Cost</th><th>Price</th><th>Margin</th><th>Margin %</th></tr>
+          </thead>
+          <tbody id="finance-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STAFF TAB -->
+    <div class="tab-content" id="tab-staff">
+      <div class="grid-4" style="margin-bottom:1.5rem;">
+        <div class="metric"><div class="m-label">Total Staff</div><div class="m-value" id="staff-total">0</div></div>
+        <div class="metric"><div class="m-label">Active</div><div class="m-value" id="staff-active" style="color:var(--success);">0</div></div>
+        <div class="metric"><div class="m-label">Departments</div><div class="m-value" id="staff-depts" style="color:var(--info);">0</div></div>
+        <div class="metric"><div class="m-label">Inactive</div><div class="m-value" id="staff-inactive" style="color:var(--ink-light);">0</div></div>
+      </div>
+
+      <div class="card accent-top" style="margin-bottom:1.5rem;">
+        <h2 style="margin-bottom:0.5rem;">Team Capacity</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:0.75rem;">Active staff per department.</p>
+        <div id="staff-capacity"></div>
+      </div>
+
+      <div class="card accent-top">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:10px;">
+          <h2 style="margin:0;">Staff Directory</h2>
+          <div id="staff-manage-btn-wrap"></div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Employee</th><th>Department</th><th>Role</th><th>Email</th><th>Pages Access</th><th>Status</th></tr>
+          </thead>
+          <tbody id="staff-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG TAB -->
+    <div class="tab-content" id="tab-activity">
+      <div class="card accent-top">
+        <h2 style="margin-bottom:0.5rem;">System Notifications &amp; Activity</h2>
+        <p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Recent system-wide notifications and stage updates.</p>
+        <div id="activity-list"></div>
+      </div>
+    </div>
+
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("dashboard.html", "Management · Overview");
+
+if(__uid !== null){
+
+/* ===== Tab Switching ===== */
+function switchTab(tabName){
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.toggle("active", c.id === "tab-" + tabName));
+}
+
+/* ===== Shared aggregation helpers ===== */
+function orbitTopClients(jobs, limit){
+  const byClient = {};
+  jobs.forEach(j => {
+    if(!j.price) return;
+    byClient[j.client] = (byClient[j.client] || 0) + j.price;
+  });
+  return Object.keys(byClient)
+    .map(name => ({name, value: byClient[name]}))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit || 5);
+}
+
+function orbitBottleneck(jobs){
+  const counts = {};
+  jobs.forEach(j => {
+    if(j.stage >= 3 && j.stage <= 12){
+      counts[j.stage] = (counts[j.stage] || 0) + 1;
+    }
+  });
+  let stage = null, count = 0;
+  Object.keys(counts).forEach(k => {
+    if(counts[k] > count){ count = counts[k]; stage = parseInt(k, 10); }
+  });
+  return stage === null ? null : {stage, name: ORBIT_STAGES[stage].name, count};
+}
+
+function orbitOnTimeRate(jobs){
+  const delivered = jobs.filter(j => j.deliveryData && j.deliveryData.status === "delivered");
+  if(delivered.length === 0) return null;
+  const onTime = delivered.filter(j => j.deliveryData.onTime !== false).length;
+  return {rate: Math.round((onTime / delivered.length) * 100), total: delivered.length};
+}
+
+/* ===== Render Alert / Urgent Job Action Panel ===== */
+function renderAlerts(){
+  const jobs = orbitGetJobs();
+  const wrap = document.getElementById("alert-panel-wrap");
+  const items = [];
+
+  jobs.forEach(j => {
+    if(j.deliveryData && j.deliveryData.status === "delivered") return;
+    const isUrgent = orbitIsUrgent(j.urgent);
+    const days = orbitDaysUntil(j.deadline);
+    const status = orbitDeadlineStatus(j.deadline);
+    if(!isUrgent && status === "") return;
+
+    let reason, action;
+    if(status === "overdue"){
+      reason = "Deadline was " + Math.abs(days) + " day" + (Math.abs(days) === 1 ? "" : "s") + " ago (" + (j.deadline || "—") + ").";
+      action = "Contact client and expedite immediately.";
+    } else if(status === "due-soon"){
+      reason = "Due in " + days + " day" + (days === 1 ? "" : "s") + " (" + (j.deadline || "—") + ").";
+      action = "Confirm this stays on schedule.";
+    } else {
+      reason = "Marked " + (j.urgent === "super-urgent" ? "Super Urgent" : "Urgent") + ".";
+      action = "Prioritise ahead of standard queue.";
+    }
+    const stageName = ORBIT_STAGES[Math.min(j.stage, ORBIT_STAGES.length - 1)].name;
+    const severity = (status === "overdue" || j.urgent === "super-urgent") ? "sev-high" : "";
+
+    items.push({job: j, reason, action, stageName, severity, sortKey: (status === "overdue" ? -1000 + (days || 0) : (status === "due-soon" ? days : 100))});
+  });
+
+  items.sort((a, b) => a.sortKey - b.sortKey);
+
+  if(items.length === 0){
+    wrap.innerHTML = "";
+    return;
+  }
+
+  wrap.innerHTML = '<div class="card accent-top" style="margin-bottom:1.5rem;">' +
+    '<h2 style="margin-bottom:0.5rem;">Urgent Job Action Panel</h2>' +
+    '<p class="note" style="margin-top:0.5rem;margin-bottom:1rem;">Orders needing the Boss\'s attention right now — overdue, due imminently, or flagged urgent.</p>' +
+    '<div class="alert-list">' +
+    items.slice(0, 8).map(it =>
+      '<div class="alert-row ' + it.severity + '">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;margin-top:1px;">' +
+          '<path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a1.9 1.9 0 0 0 1.63 2.85h17.1A1.9 1.9 0 0 0 22.18 18L13.71 3.86a1.9 1.9 0 0 0-3.42 0Z"/>' +
+        '</svg>' +
+        '<div>' +
+          '<span class="al-job">' + it.job.id + '</span> &middot; ' + it.job.client + ' &middot; at ' + it.stageName +
+          '<div class="al-reason">' + it.reason + ' <strong>Next:</strong> ' + it.action + '</div>' +
+        '</div>' +
+      '</div>'
+    ).join("") +
+    '</div></div>';
+}
+
+/* ===== Render Business Health ===== */
+function renderBusinessHealth(){
+  const jobs = orbitGetJobs();
+  const priced = jobs.filter(j => j.price > 0);
+
+  const now = new Date();
+  const monthJobs = priced.filter(j => {
+    const d = orbitParseDate(j.createdAt);
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthRevenue = monthJobs.reduce((s, j) => s + j.price, 0);
+  document.getElementById("health-revenue").textContent = orbitFormatRM(monthRevenue);
+
+  const trend = orbitDailyTrend(jobs, 7, "createdAt", j => j.price || 0);
+  document.getElementById("health-revenue-spark").innerHTML = orbitSparkline(trend, "#1B7A3E", 130, 28) + '<div class="m-sub" style="margin-top:2px;">last 7 days</div>';
+
+  const totalRev = priced.reduce((s, j) => s + j.price, 0);
+  const totalCost = priced.reduce((s, j) => s + (j.cost || 0), 0);
+  const margin = totalRev > 0 ? Math.round(((totalRev - totalCost) / totalRev) * 100) : 0;
+  document.getElementById("health-margin").textContent = margin + "%";
+  document.getElementById("health-margin").style.color = margin >= 25 ? "var(--success)" : (margin >= 10 ? "var(--warning)" : "var(--danger)");
+
+  const ontime = orbitOnTimeRate(jobs);
+  document.getElementById("health-ontime").textContent = ontime ? ontime.rate + "%" : "—";
+  document.getElementById("health-ontime-sub").textContent = ontime ? ("of " + ontime.total + " completed deliveries") : "no deliveries yet";
+
+  const bn = orbitBottleneck(jobs);
+  document.getElementById("health-bottleneck").textContent = bn ? bn.name : "None";
+  document.getElementById("health-bottleneck-sub").textContent = bn ? (bn.count + " job" + (bn.count === 1 ? "" : "s") + " waiting here") : "production is clear";
+}
+
+/* ===== Render Top Clients + Pipeline (Overview) ===== */
+function renderTopClientsAndPipeline(){
+  const jobs = orbitGetJobs();
+  const top = orbitTopClients(jobs, 5);
+  const clientsEl = document.getElementById("ov-top-clients");
+  clientsEl.innerHTML = top.length === 0
+    ? '<p class="note" style="margin:0;">No priced orders yet.</p>'
+    : '<div class="mini-list">' + top.map(c =>
+        '<div class="mini-row"><span class="mr-name">' + c.name + '</span><span class="mr-value">' + orbitFormatRM(c.value) + '</span></div>'
+      ).join("") + '</div>';
+
+  const pipelineJobs = jobs.filter(j => j.stage < 3);
+  const pipelineValue = pipelineJobs.reduce((s, j) => s + (j.price || 0), 0);
+  const converted = jobs.filter(j => j.stage >= 3).length;
+  const conversionRate = jobs.length > 0 ? Math.round((converted / jobs.length) * 100) : 0;
+
+  document.getElementById("ov-pipeline").innerHTML =
+    '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;">' +
+      '<span style="font-family:var(--font-heading);font-size:28px;font-weight:700;color:var(--warning-dark);">' + orbitFormatRM(pipelineValue) + '</span>' +
+      '<span class="m-sub" style="margin:0;">across ' + pipelineJobs.length + ' order' + (pipelineJobs.length === 1 ? "" : "s") + ' at intake</span>' +
+    '</div>' +
+    '<div class="note info" style="margin:0;">' + conversionRate + '% of all orders have moved past intake into production.</div>';
+}
+
+/* ===== Render Overview ===== */
+function renderOverview(){
+  const jobs = orbitGetJobs();
+  document.getElementById("ov-total").textContent = jobs.length;
+  document.getElementById("ov-prod").textContent = jobs.filter(j => j.stage >= 3 && j.stage < 13).length;
+  document.getElementById("ov-urgent").textContent = jobs.filter(j => orbitIsUrgent(j.urgent)).length;
+  document.getElementById("ov-delivered").textContent = jobs.filter(j => j.deliveryData?.status === "delivered").length;
+
+  renderAlerts();
+  renderBusinessHealth();
+  renderTopClientsAndPipeline();
+
+  // Workflow Summary — grouped into 4 high-level business categories
+  const groups = [
+    {name:"Order Intake", icon:orbitIconSVG("clipboard"), stages:[0,1,2], color:"var(--info)", bg:"var(--info-bg)", desc:"Quotation, design & planning"},
+    {name:"In Production", icon:orbitIconSVG("factory"), stages:[3,4,5,6,7,8,9,10,11], color:"var(--brand-red)", bg:"var(--brand-red-light)", desc:"Active manufacturing on factory floor"},
+    {name:"Quality Check", icon:orbitIconSVG("check"), stages:[12], color:"var(--warning)", bg:"var(--warning-bg)", desc:"Final inspection before shipping"},
+    {name:"Ready for Dispatch", icon:orbitIconSVG("truck"), stages:[13], color:"var(--success)", bg:"var(--success-bg)", desc:"Completed orders awaiting delivery"}
+  ];
+
+  const wfEl = document.getElementById("workflow-overview");
+  wfEl.innerHTML = groups.map(g => {
+    const groupJobs = jobs.filter(j => g.stages.indexOf(Math.min(j.stage, ORBIT_STAGES.length - 1)) !== -1);
+    const count = groupJobs.length;
+    const urgentCount = groupJobs.filter(j => orbitIsUrgent(j.urgent)).length;
+    const pct = jobs.length > 0 ? (count / jobs.length * 100) : 0;
+    return '<div class="workflow-card" style="background:' + g.bg + ';border:1.5px solid ' + g.color + '33;border-radius:var(--radius-lg);padding:1.1rem;">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:' + g.color + '1F;color:' + g.color + ';flex-shrink:0;">' + g.icon + '</span>' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:15px;color:var(--ink);">' + g.name + '</div>' +
+          '<div style="font-size:11px;color:var(--ink-light);">' + g.desc + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;">' +
+        '<span style="font-family:var(--font-heading);font-size:32px;font-weight:700;color:' + g.color + ';line-height:1;">' + count + '</span>' +
+        '<span style="font-size:12px;color:var(--ink-light);">orders</span>' +
+        (urgentCount > 0 ? '<span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--urgent);background:var(--urgent-bg);padding:3px 10px;border-radius:999px;">' + urgentCount + ' URGENT</span>' : '') +
+      '</div>' +
+      '<div style="height:5px;background:rgba(0,0,0,0.06);border-radius:999px;overflow:hidden;">' +
+        '<div style="height:100%;width:' + pct + '%;background:' + g.color + ';border-radius:999px;transition:width 0.4s ease;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--ink-light);margin-top:6px;">' + pct.toFixed(0) + '% of total orders</div>' +
+    '</div>';
+  }).join("");
+
+  // Recent orders
+  const recent = jobs.slice(0, 8);
+  document.getElementById("recent-orders-body").innerHTML = recent.map(j => {
+    const stage = ORBIT_STAGES[Math.min(j.stage, ORBIT_STAGES.length - 1)];
+    const dClass = orbitDeadlineStatus(j.deadline);
+    return '<tr class="orbit-filterable" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + orbitIsUrgent(j.urgent) + '">' +
+      '<td class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</td>' +
+      '<td>' + j.client + '</td>' +
+      '<td>' + (j.product || "—") + '</td>' +
+      '<td class="mono">' + (j.quantity?.toLocaleString() || "—") + '</td>' +
+      '<td><strong style="color:var(--brand-red-dark);">' + stage.name + '</strong></td>' +
+      '<td><span class="badge badge-' + j.status + '">' + (j.statusLabel || j.status) + '</span></td>' +
+      '<td><span class="deadline-tag ' + dClass + '">' + (j.deadline || "—") + '</span></td>' +
+    '</tr>';
+  }).join("");
+}
+
+/* ===== Render Sales ===== */
+function renderSales(){
+  const jobs = orbitGetJobs();
+  document.getElementById("sales-open").textContent = jobs.filter(j => j.stage < 3).length;
+  document.getElementById("sales-design").textContent = jobs.filter(j => j.stage === 1).length;
+
+  const now = new Date();
+  const monthJobs = jobs.filter(j => {
+    const d = orbitParseDate(j.createdAt);
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const totalRev = monthJobs.reduce((s, j) => s + (j.price || 0), 0);
+  document.getElementById("sales-revenue").textContent = orbitFormatRM(totalRev);
+
+  const pipelineJobs = jobs.filter(j => j.stage < 3);
+  const pipelineValue = pipelineJobs.reduce((s, j) => s + (j.price || 0), 0);
+  document.getElementById("sales-pipeline").textContent = orbitFormatRM(pipelineValue);
+  const converted = jobs.filter(j => j.stage >= 3).length;
+  const conversionRate = jobs.length > 0 ? Math.round((converted / jobs.length) * 100) : 0;
+  document.getElementById("sales-conversion-sub").textContent = conversionRate + "% quote-to-order conversion";
+
+  const top = orbitTopClients(jobs, 5);
+  document.getElementById("sales-top-clients").innerHTML = top.length === 0
+    ? '<p class="note" style="margin:0;">No priced orders yet.</p>'
+    : top.map(c => '<div class="mini-row"><span class="mr-name">' + c.name + '</span><span class="mr-value">' + orbitFormatRM(c.value) + '</span></div>').join("");
+
+  const byPerson = {};
+  jobs.forEach(j => {
+    const name = j.salesPerson || "Unassigned";
+    if(!byPerson[name]) byPerson[name] = {count: 0, value: 0};
+    byPerson[name].count++;
+    byPerson[name].value += (j.price || 0);
+  });
+  const personRows = Object.keys(byPerson).sort((a, b) => byPerson[b].value - byPerson[a].value);
+  document.getElementById("sales-by-person").innerHTML = personRows.map(name =>
+    '<div class="mini-row"><span class="mr-name">' + name + '<span class="mr-sub"> &middot; ' + byPerson[name].count + ' order' + (byPerson[name].count === 1 ? "" : "s") + '</span></span><span class="mr-value">' + orbitFormatRM(byPerson[name].value) + '</span></div>'
+  ).join("");
+
+  document.getElementById("sales-orders-body").innerHTML = jobs.slice(0, 12).map(j => {
+    const stage = ORBIT_STAGES[Math.min(j.stage, ORBIT_STAGES.length - 1)];
+    const margin = (j.price || 0) - (j.cost || 0);
+    return '<tr class="orbit-filterable" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + orbitIsUrgent(j.urgent) + '">' +
+      '<td class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</td>' +
+      '<td>' + j.client + '</td>' +
+      '<td>' + (j.product || "—") + '</td>' +
+      '<td class="mono">' + (j.quantity?.toLocaleString() || "—") + '</td>' +
+      '<td class="mono">' + (j.price ? orbitFormatRM(j.price) : "—") + '</td>' +
+      '<td class="mono" style="color:var(--success);">' + (margin > 0 ? orbitFormatRM(margin) : "—") + '</td>' +
+      '<td>' + (j.salesPerson || "—") + '</td>' +
+      '<td><strong style="color:var(--brand-red-dark);">' + stage.name + '</strong></td>' +
+    '</tr>';
+  }).join("");
+}
+
+/* ===== Render Production ===== */
+function renderProduction(){
+  const jobs = orbitGetJobs();
+  const prodJobs = jobs.filter(j => j.stage >= 3 && j.stage < 13);
+  document.getElementById("prod-active").textContent = prodJobs.length;
+  document.getElementById("prod-cutter").textContent = prodJobs.filter(j => j.stage === 3).length;
+  document.getElementById("prod-printing").textContent = prodJobs.filter(j => j.stage === 4).length;
+  document.getElementById("prod-qc").textContent = prodJobs.filter(j => j.stage === 12).length;
+
+  const bn = orbitBottleneck(jobs);
+  const bnWrap = document.getElementById("bottleneck-banner-wrap");
+  if(bn && bn.count >= 2){
+    bnWrap.innerHTML = '<div class="bottleneck-banner">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a1.9 1.9 0 0 0 1.63 2.85h17.1A1.9 1.9 0 0 0 22.18 18L13.71 3.86a1.9 1.9 0 0 0-3.42 0Z"/></svg>' +
+      '<div><strong>' + bn.name + '</strong> is the current bottleneck — ' + bn.count + ' jobs are queued at this stage. Consider reallocating operators here.</div>' +
+    '</div>';
+  } else {
+    bnWrap.innerHTML = '<div class="bottleneck-banner ok">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><path d="M20 6 9 17l-5-5"/></svg>' +
+      '<div>No stage is backed up right now — production flow is balanced.</div>' +
+    '</div>';
+  }
+
+  const stageEl = document.getElementById("stage-load");
+  const maxCount = Math.max(1, ...ORBIT_STAGES.map((s, i) => jobs.filter(j => j.stage === i).length));
+  stageEl.innerHTML = ORBIT_STAGES.map((s, i) => {
+    const count = jobs.filter(j => j.stage === i).length;
+    const pct = (count / maxCount) * 100;
+    const isBn = bn && bn.stage === i;
+    return '<div class="bar-row">' +
+      '<div class="br-label">' + s.name + '</div>' +
+      '<div class="br-track"><div class="br-fill" style="width:' + pct + '%;background:' + (isBn ? 'var(--urgent)' : 'var(--brand-red)') + ';"></div></div>' +
+      '<div class="br-count">' + count + '</div>' +
+    '</div>';
+  }).join("");
+
+  const listEl = document.getElementById("prod-status-list");
+  if(prodJobs.length === 0){
+    listEl.innerHTML = '<p class="note" style="margin:0;">No jobs in production currently.</p>';
+    return;
+  }
+
+  listEl.innerHTML = prodJobs.map(j => {
+    const currentStage = ORBIT_STAGES[Math.min(j.stage, ORBIT_STAGES.length - 1)];
+    const isUrgent = orbitIsUrgent(j.urgent);
+    const urgencyClass = j.urgent === "super-urgent" ? " super-urgent" : (isUrgent ? " important" : "");
+
+    return '<div class="job-card orbit-filterable' + urgencyClass + '" style="margin-bottom:10px;padding:1rem;"' +
+      ' data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
+      '<div class="job-card-head" style="margin-bottom:0.5rem;">' +
+        '<div><div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
+        '<div class="job-client">' + j.client + ' &middot; ' + (j.product || "—") + '</div></div>' +
+        '<span class="badge badge-progress">At ' + currentStage.name + '</span>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--ink-light);">' +
+        'Qty: <span class="mono" style="font-weight:600;color:var(--ink-3);">' + (j.quantity?.toLocaleString() || "—") + '</span>' +
+        ' &middot; Deadline: <span class="deadline-tag ' + orbitDeadlineStatus(j.deadline) + '" style="margin-left:2px;">' + (j.deadline || "—") + '</span>' +
+        (j.productionHistory?.length ? ' &middot; Stages completed: <strong style="color:var(--success);">' + j.productionHistory.length + '</strong>' : '') +
+      '</div>' +
+    '</div>';
+  }).join("");
+}
+
+/* ===== Render Delivery ===== */
+function renderDelivery(){
+  const jobs = orbitGetJobs().filter(j => j.stage >= 13);
+  document.getElementById("del-pending").textContent = jobs.filter(j => j.deliveryData?.status === "pending").length;
+  document.getElementById("del-transit").textContent = jobs.filter(j => j.deliveryData?.status === "dispatched").length;
+  document.getElementById("del-done").textContent = jobs.filter(j => j.deliveryData?.status === "delivered").length;
+  document.getElementById("del-overdue").textContent = jobs.filter(j => j.deliveryData?.status !== "delivered" && orbitDeadlineStatus(j.deadline) === "overdue").length;
+
+  const byCourier = {};
+  jobs.forEach(j => {
+    const c = j.deliveryData?.courier;
+    if(!c) return;
+    if(!byCourier[c]) byCourier[c] = {count: 0, delivered: 0};
+    byCourier[c].count++;
+    if(j.deliveryData.status === "delivered") byCourier[c].delivered++;
+  });
+  const courierNames = Object.keys(byCourier).sort((a, b) => byCourier[b].count - byCourier[a].count);
+  document.getElementById("courier-performance").innerHTML = courierNames.length === 0
+    ? '<p class="note" style="margin:0;">No jobs dispatched yet.</p>'
+    : courierNames.map(name =>
+        '<div class="mini-row"><span class="mr-name">' + name + '</span><span class="mr-value">' + byCourier[name].count + ' job' + (byCourier[name].count === 1 ? "" : "s") + '<span class="mr-sub"> &middot; ' + byCourier[name].delivered + ' delivered</span></span></div>'
+      ).join("");
+
+  document.getElementById("delivery-body").innerHTML = jobs.map(j => {
+    const dd = j.deliveryData || {};
+    const status = dd.status || "pending";
+    const overdue = status !== "delivered" && orbitDeadlineStatus(j.deadline) === "overdue";
+    return '<tr class="orbit-filterable" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + orbitIsUrgent(j.urgent) + '"' + (overdue ? ' style="background:var(--danger-bg);"' : '') + '>' +
+      '<td class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</td>' +
+      '<td>' + j.client + '</td>' +
+      '<td>' + (dd.courier || "—") + '</td>' +
+      '<td>' + (dd.trackingNo ? '<span class="tracking-display" style="font-size:11px;">' + dd.trackingNo + '</span>' : "—") + '</td>' +
+      '<td class="mono" style="font-size:11px;">' + (dd.doNumber || "—") + '</td>' +
+      '<td><span class="delivery-status ' + status + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span>' + (overdue ? ' <span class="deadline-tag overdue" style="margin-left:4px;">Overdue</span>' : '') + '</td>' +
+      '<td class="mono" style="font-size:11px;">' + (dd.dispatchedAt || "—") + '</td>' +
+    '</tr>';
+  }).join("");
+}
+
+/* ===== Render Finance ===== */
+function renderFinance(){
+  const jobs = orbitGetJobs().filter(j => j.price > 0);
+  const totalRev = jobs.reduce((s, j) => s + (j.price || 0), 0);
+  const totalCost = jobs.reduce((s, j) => s + (j.cost || 0), 0);
+  const totalProfit = totalRev - totalCost;
+  const marginPct = totalRev > 0 ? Math.round((totalProfit / totalRev) * 100) : 0;
+
+  document.getElementById("fin-revenue").textContent = orbitFormatRM(totalRev);
+  document.getElementById("fin-cost").textContent = orbitFormatRM(totalCost);
+  document.getElementById("fin-profit").textContent = orbitFormatRM(totalProfit);
+  document.getElementById("fin-margin").textContent = marginPct + "%";
+  document.getElementById("fin-margin").style.color = marginPct >= 25 ? "var(--success)" : (marginPct >= 10 ? "var(--warning)" : "var(--danger)");
+
+  document.getElementById("finance-body").innerHTML = jobs.map(j => {
+    const margin = (j.price || 0) - (j.cost || 0);
+    const marginPctJob = j.cost > 0 ? ((margin / j.cost) * 100) : 0;
+    const low = marginPctJob < 15;
+    return '<tr class="orbit-filterable" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + orbitIsUrgent(j.urgent) + '"' + (low ? ' style="background:var(--danger-bg);"' : '') + '>' +
+      '<td class="job-id">' + j.id + '</td>' +
+      '<td>' + j.client + '</td>' +
+      '<td class="mono">' + (j.quantity?.toLocaleString() || "—") + '</td>' +
+      '<td class="mono">' + (j.cost ? orbitFormatRM(j.cost) : "—") + '</td>' +
+      '<td class="mono" style="font-weight:700;">' + orbitFormatRM(j.price) + '</td>' +
+      '<td class="mono" style="color:var(--success);font-weight:600;">' + orbitFormatRM(margin) + '</td>' +
+      '<td class="mono" style="color:' + (marginPctJob >= 30 ? 'var(--success)' : (marginPctJob >= 15 ? 'var(--warning)' : 'var(--danger)')) + ';font-weight:600;">' + marginPctJob.toFixed(1) + '%' + (low ? ' ⚠' : '') + '</td>' +
+    '</tr>';
+  }).join("");
+}
+
+/* ===== Render Staff ===== */
+function renderStaff(){
+  // Show Manage Staff button only for Admin role, not Boss
+  const currentUser = ORBIT_USERS[__uid];
+  const btnWrap = document.getElementById("staff-manage-btn-wrap");
+  if(btnWrap){
+    if(currentUser && currentUser.role && currentUser.role.toLowerCase().indexOf("admin") !== -1){
+      btnWrap.innerHTML = '<button class="btn btn-primary btn-sm" onclick="location.href=\'admin.html\'+location.search">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">' +
+          '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>' +
+        '</svg>Manage Staff</button>';
+    } else {
+      btnWrap.innerHTML = '';
+    }
+  }
+  const emps = orbitGetEmployees();
+  document.getElementById("staff-total").textContent = emps.length;
+  document.getElementById("staff-active").textContent = emps.filter(e => e.active).length;
+  document.getElementById("staff-inactive").textContent = emps.filter(e => !e.active).length;
+  document.getElementById("staff-depts").textContent = new Set(emps.map(e => e.dept)).size;
+
+  const byDept = {};
+  emps.forEach(e => {
+    if(!byDept[e.dept]) byDept[e.dept] = {active: 0, total: 0};
+    byDept[e.dept].total++;
+    if(e.active) byDept[e.dept].active++;
+  });
+  const deptNames = Object.keys(byDept).sort((a, b) => byDept[b].total - byDept[a].total);
+  const maxDept = Math.max(1, ...deptNames.map(d => byDept[d].total));
+  document.getElementById("staff-capacity").innerHTML = deptNames.map(name => {
+    const d = byDept[name];
+    const pct = (d.total / maxDept) * 100;
+    return '<div class="bar-row">' +
+      '<div class="br-label">' + name + '</div>' +
+      '<div class="br-track"><div class="br-fill" style="width:' + pct + '%;background:var(--info);"></div></div>' +
+      '<div class="br-count">' + d.active + '/' + d.total + '</div>' +
+    '</div>';
+  }).join("");
+
+  document.getElementById("staff-body").innerHTML = emps.map(e => {
+    const pages = e.pages || [];
+    const pageBadges = ALL_PAGES.filter(p => pages.includes(p)).slice(0, 4).map(p =>
+      '<span class="page-badge allowed">' + (PAGE_LABELS[p] || p).replace(/\.html$/,'') + '</span>'
+    ).join("");
+    const more = pages.length > 4 ? '<span class="page-badge allowed">+' + (pages.length - 4) + '</span>' : '';
+
+    return '<tr>' +
+      '<td><span class="emp-avatar">' + e.initials + '</span><strong>' + e.name + '</strong></td>' +
+      '<td>' + e.dept + '</td>' +
+      '<td>' + e.role + '</td>' +
+      '<td class="mono" style="font-size:11px;">' + e.email + '</td>' +
+      '<td><div class="page-badges">' + pageBadges + more + '</div></td>' +
+      '<td><span class="emp-status ' + (e.active ? 'active' : 'inactive') + '">' + (e.active ? 'Active' : 'Inactive') + '</span></td>' +
+    '</tr>';
+  }).join("");
+}
+
+/* ===== Render Activity ===== */
+function renderActivity(){
+  const notifs = orbitGetNotifications().slice(0, 20);
+  const el = document.getElementById("activity-list");
+
+  if(notifs.length === 0){
+    el.innerHTML = '<p class="note" style="margin:0;">No activity recorded yet. Create orders to see notifications here.</p>';
+    return;
+  }
+
+  el.innerHTML = '<div class="timeline">' +
+    notifs.map(n =>
+      '<div class="timeline-row">' +
+        '<div class="timeline-stage">' + (n.stageName || "System") + '</div>' +
+        '<div class="timeline-detail">' +
+          (n.jobId ? '<span class="mono" style="color:var(--brand-red-dark);font-weight:700;">' + n.jobId + '</span> ' : '') +
+          n.message +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<span class="badge badge-' + (n.read ? 'complete' : 'progress') + '">' + (n.read ? 'Read' : 'New') + '</span>' +
+          '<div class="timeline-time" style="margin-top:6px;">' + n.timestamp + '</div>' +
+        '</div>' +
+      '</div>'
+    ).join("") +
+  '</div>';
+}
+
+/* ===== Render All ===== */
+function renderAll(){
+  renderOverview();
+  renderSales();
+  renderProduction();
+  renderDelivery();
+  renderFinance();
+  renderStaff();
+  renderActivity();
+  orbitApplyFilters();
+}
+
+/* ===== Initialize ===== */
+renderAll();
+
+} // end auth check
+</script>
+
+</body>
+</html>

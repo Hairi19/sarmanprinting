@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.prod-toolbar{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:1.25rem;flex-wrap:wrap;gap:10px;
+}
+.prod-toolbar .left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.stage-filter-group{
+  display:flex;gap:4px;background:var(--surface-alt);
+  padding:6px;border-radius:999px;border:1px solid var(--line);flex-wrap:wrap;
+}
+.stage-filter-btn{
+  padding:6px 14px;border:none;background:transparent;border-radius:999px;
+  font-size:12px;font-weight:600;color:var(--ink-light);cursor:pointer;
+  transition:all 0.15s;
+}
+.stage-filter-btn:hover{color:var(--ink);}
+.stage-filter-btn.active{
+  background:var(--brand-red);color:#fff;
+}
+.scan-qr-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;background:var(--ink);color:#fff;
+  border:none;border-radius:999px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.15s;
+}
+.scan-qr-btn:hover{background:var(--ink-2);transform:translateY(-1px);}
+.prod-empty{
+  text-align:center;padding:3rem 1rem;color:var(--ink-light);
+}
+.prod-empty svg{opacity:0.4;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Production Floor</h1>
+      <p class="page-desc">
+        View all active orders and their current stage. Scan a job's QR code to update the stage with photo proof and notes.
+      </p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="prod-toolbar">
+      <div class="left">
+        <button class="scan-qr-btn" onclick="openQRScanner()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/>
+          </svg>
+          Scan QR to Update Stage
+        </button>
+        <div class="stage-filter-group" id="stage-filter-group">
+          <button class="stage-filter-btn active" data-stage="all" onclick="setStageFilter('all')">All Stages</button>
+          <button class="stage-filter-btn" data-stage="3" onclick="setStageFilter('3')">Cutter</button>
+          <button class="stage-filter-btn" data-stage="4" onclick="setStageFilter('4')">Printing</button>
+          <button class="stage-filter-btn" data-stage="5" onclick="setStageFilter('5')">Lamination</button>
+          <button class="stage-filter-btn" data-stage="6" onclick="setStageFilter('6')">Spot UV</button>
+          <button class="stage-filter-btn" data-stage="7" onclick="setStageFilter('7')">Stamping</button>
+          <button class="stage-filter-btn" data-stage="8" onclick="setStageFilter('8')">Emboss</button>
+          <button class="stage-filter-btn" data-stage="9" onclick="setStageFilter('9')">Deboss</button>
+          <button class="stage-filter-btn" data-stage="10" onclick="setStageFilter('10')">Die Cut</button>
+          <button class="stage-filter-btn" data-stage="11" onclick="setStageFilter('11')">Glue</button>
+          <button class="stage-filter-btn" data-stage="12" onclick="setStageFilter('12')">Final QC</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-light);">
+        Showing <span id="prod-count" style="font-weight:700;color:var(--ink);">0</span> orders
+      </div>
+    </div>
+
+    <!-- Orders List -->
+    <div id="prod-orders-list"></div>
+
+  </main>
+
+  <!-- QR Scanner / Stage Update Modal Container -->
+  <div id="prod-modal-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("production.html", "Production Floor");
+
+if(__uid !== null){
+
+let currentStageFilter = "all";
+let currentPhotoProof = null;
+
+/* ===== Render Production Orders ===== */
+function renderProductionOrders(){
+  const jobs = orbitGetJobs().filter(j => {
+    if(j.stage < 3) return false; // Not in production yet
+    if(j.stage >= 13) return false; // Already delivered
+    if(currentStageFilter !== "all" && j.stage !== parseInt(currentStageFilter)) return false;
+    return true;
+  });
+
+  document.getElementById("prod-count").textContent = jobs.length;
+
+  const listEl = document.getElementById("prod-orders-list");
+
+  if(jobs.length === 0){
+    listEl.innerHTML =
+      '<div class="card accent-top prod-empty">' +
+        '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+          '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>' +
+          '<polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>' +
+        '</svg>' +
+        '<p style="font-weight:600;">No orders at this stage</p>' +
+        '<p style="font-size:13px;">Try selecting a different stage filter or "All Stages".</p>' +
+      '</div>';
+    return;
+  }
+
+  listEl.innerHTML = jobs.map(j => {
+    const isUrgent = orbitIsUrgent(j.urgent);
+    const urgencyClass = j.urgent === "super-urgent" ? " super-urgent" : (isUrgent ? " important" : "");
+    const currentStageIdx = Math.min(j.stage, ORBIT_STAGES.length - 1);
+    const nextStageIdx = orbitNextStageIdx(j);   // skips stages this order doesn't need
+    const currentStage = ORBIT_STAGES[currentStageIdx];
+    const nextStage = ORBIT_STAGES[nextStageIdx];
+    const sd = j.salesData || {};
+
+    // Build stage stepper — only the stages THIS order needs
+    const stageList = orbitJobStageList(j);
+    const stepper = stageList.map((absIdx, pos) => {
+      let cls = "";
+      if(absIdx < currentStageIdx) cls = "done";
+      else if(absIdx === currentStageIdx) cls = "current";
+      return '<div class="stage-step ' + cls + '"><span class="step-num">' + (pos + 1) + '</span>' + ORBIT_STAGES[absIdx].name + '</div>';
+    }).join("");
+    const skippedNames = ORBIT_STAGES.slice(3, 13).map((st, r) => r + 3).filter(i => stageList.indexOf(i) === -1).map(i => ORBIT_STAGES[i].name);
+    const skippedHtml = skippedNames.length
+      ? '<div style="font-size:11.5px;color:var(--ink-light);margin:-2px 0 10px;">Not needed for this order: ' + skippedNames.join(", ") + '</div>'
+      : '';
+
+    // Build production history
+    const historyHtml = j.productionHistory?.length ?
+      '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">' +
+        '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-light);font-weight:700;margin-bottom:6px;">Recent Activity</div>' +
+        j.productionHistory.slice(-3).reverse().map(h =>
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px dashed var(--line);">' +
+            '<span><strong style="color:var(--brand-red-dark);">' + h.stageName + '</strong> — ' + (h.qty?.toLocaleString() || "—") + ' units by ' + (h.operator || "—") + '</span>' +
+            '<span class="mono" style="color:var(--ink-light);font-size:11px;">' + (h.timestamp || "—") + '</span>' +
+          '</div>'
+        ).join("") +
+      '</div>' : '';
+
+    // Photo proof thumbnails
+    const proofThumbs = j.productionHistory?.filter(h => h.photo).slice(-3).map(h =>
+      '<img class="proof-thumb" src="' + h.photo + '" alt="Proof" onclick="viewPhoto(\'' + h.photo + '\')">'
+    ).join("") || '';
+
+    return '<div class="prod-order-card orbit-filterable' + urgencyClass + '"' +
+      ' data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
+
+      // Header
+      '<div class="prod-order-header">' +
+        '<div style="min-width:0;">' +
+          '<div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
+          '<div class="job-client">' + j.client + ' &middot; ' + (j.product || "—") + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
+          '<div style="text-align:right;">' +
+            '<div style="font-size:11px;color:var(--ink-light);">Current Stage</div>' +
+            '<div style="font-weight:700;color:var(--brand-red);font-size:15px;">' + currentStage.name + '</div>' +
+          '</div>' +
+          orbitQRImageTag(j.id, 56, "qr-code") +
+        '</div>' +
+      '</div>' +
+
+      // Stage Stepper
+      '<div class="stage-stepper">' + stepper + '</div>' + skippedHtml +
+
+      // Info Grid
+      '<div class="prod-order-info">' +
+        '<div class="prod-info-item"><div class="lbl">Quantity</div><div class="val mono">' + (j.quantity?.toLocaleString() || "—") + '</div></div>' +
+        '<div class="prod-info-item"><div class="lbl">Deadline</div><div class="val">' + (j.deadline || "—") + '</div></div>' +
+        '<div class="prod-info-item"><div class="lbl">Paper</div><div class="val">' + (sd.paperType || "—") + (sd.gsm ? ' ' + sd.gsm + 'gsm' : '') + '</div></div>' +
+        '<div class="prod-info-item"><div class="lbl">Colour</div><div class="val">' + (sd.colour || "—") + '</div></div>' +
+      '</div>' +
+
+      // Photo proofs
+      (proofThumbs ? '<div style="margin-bottom:10px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-light);font-weight:700;margin-bottom:4px;">Photo Proofs</div><div class="proof-thumbs">' + proofThumbs + '</div></div>' : '') +
+
+      historyHtml +
+
+      // Actions
+      '<div class="job-actions" style="margin-top:1rem;margin-bottom:0;">' +
+        '<button class="btn btn-primary" onclick="openStageUpdate(\'' + j.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">' +
+            '<path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7Z"/>' +
+          '</svg>' +
+          'Complete ' + currentStage.name + ' &rarr; ' + nextStage.name +
+        '</button>' +
+        '<button class="btn" onclick="printProductionJobSheet(\'' + j.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>' +
+          '</svg>' +
+          'Print Job Sheet' +
+        '</button>' +
+        '<button class="btn" onclick="viewJobQR(\'' + j.id + '\')">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>' +
+            '<rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/>' +
+          '</svg>' +
+          'View QR' +
+        '</button>' +
+      '</div>' +
+
+    '</div>';
+  }).join("");
+
+  orbitApplyFilters();
+}
+
+/* ===== Stage Filter ===== */
+function setStageFilter(stage){
+  currentStageFilter = stage;
+  document.querySelectorAll(".stage-filter-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.stage === stage);
+  });
+  renderProductionOrders();
+}
+
+/* ===== View Job QR Modal ===== */
+function viewJobQR(jobId){
+  const job = orbitGetJob(jobId);
+  if(!job) return;
+
+  const modal = document.getElementById("prod-modal-container");
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+      '<div class="modal" style="max-width:420px;text-align:center;">' +
+        '<div class="modal-header">' +
+          '<h2>QR Code — ' + jobId + '</h2>' +
+          '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').parentElement.innerHTML=\'\'">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="qr-card" style="margin:0 auto;max-width:240px;">' +
+            '<div class="qr-label">Scan to update stage</div>' +
+            orbitQRImageTag(jobId, 180, "qr-code") +
+            '<div class="qr-job-id">' + jobId + '</div>' +
+            '<div class="qr-hint">' + job.client + '</div>' +
+          '</div>' +
+          '<p class="note" style="margin-top:1rem;text-align:left;">' +
+            'Production staff scan this QR code to update the job stage. Each update requires a photo as proof.' +
+          '</p>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ===== View Photo ===== */
+function viewPhoto(photoData){
+  const modal = document.getElementById("prod-modal-container");
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+      '<div class="modal" style="max-width:560px;">' +
+        '<div class="modal-header">' +
+          '<h2>Photo Proof</h2>' +
+          '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').parentElement.innerHTML=\'\'">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body" style="text-align:center;">' +
+          '<img src="' + photoData + '" style="max-width:100%;border-radius:var(--radius);">' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ===== Open Stage Update Modal ===== */
+function openStageUpdate(jobId){
+  const job = orbitGetJob(jobId);
+  if(!job) return;
+
+  const currentStageIdx = Math.min(job.stage, ORBIT_STAGES.length - 1);
+  const nextStageIdx = orbitNextStageIdx(job);
+  const currentStage = ORBIT_STAGES[currentStageIdx];
+  const nextStage = ORBIT_STAGES[nextStageIdx];
+  currentPhotoProof = null;
+
+  const modal = document.getElementById("prod-modal-container");
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.innerHTML=\'\';}">' +
+      '<div class="modal" style="max-width:640px;">' +
+        '<div class="modal-header">' +
+          '<h2>Update Stage — ' + jobId + '</h2>' +
+          '<button class="modal-close" onclick="orbitStopCamera();this.closest(\'.modal-overlay\').parentElement.innerHTML=\'\'">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+
+          // Stage flow indicator
+          '<div class="stage-flow-indicator" style="margin-bottom:1.25rem;">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+              '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>' +
+            '</svg>' +
+            '<span>From: <span class="from-stage">' + currentStage.name + '</span></span>' +
+            '<span class="arrow">&rarr;</span>' +
+            '<span>To: <span class="to-stage">' + nextStage.name + '</span></span>' +
+          '</div>' +
+
+          // Job info
+          '<div class="summary-grid" style="margin-bottom:1.25rem;">' +
+            '<div class="summary-item"><div class="lbl">Job ID</div><div class="val mono brand">' + jobId + '</div></div>' +
+            '<div class="summary-item"><div class="lbl">Client</div><div class="val">' + job.client + '</div></div>' +
+            '<div class="summary-item"><div class="lbl">Product</div><div class="val">' + (job.product || "—") + '</div></div>' +
+            '<div class="summary-item"><div class="lbl">Quantity</div><div class="val mono">' + (job.quantity?.toLocaleString() || "—") + '</div></div>' +
+          '</div>' +
+
+          // Camera / Photo section
+          '<h4 style="margin-bottom:0.75rem;">Photo Proof <span class="req">*</span></h4>' +
+          '<div class="camera-preview">' +
+            '<div class="camera-preview-box">' +
+              '<h4>CAMERA</h4>' +
+              '<div class="camera-container" id="camera-box" style="min-height:180px;display:flex;align-items:center;justify-content:center;color:var(--ink-light);font-size:12px;">' +
+                'Click "Start Camera" to take a photo' +
+              '</div>' +
+            '</div>' +
+            '<div class="camera-preview-box">' +
+              '<h4>CAPTURED PROOF</h4>' +
+              '<div id="proof-preview" style="min-height:180px;display:flex;align-items:center;justify-content:center;color:var(--ink-light);font-size:12px;border:2px dashed var(--line);border-radius:8px;">' +
+                'No photo captured yet' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="camera-actions">' +
+            '<button class="btn" onclick="startCamera()">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>' +
+                '<circle cx="12" cy="13" r="4"/>' +
+              '</svg> Start Camera' +
+            '</button>' +
+            '<button class="capture-btn" onclick="capturePhoto()" title="Capture"></button>' +
+            '<button class="btn" onclick="uploadPhoto()">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+                '<polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>' +
+              '</svg> Upload File' +
+            '</button>' +
+          '</div>' +
+          '<input type="file" id="photo-upload-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload()">' +
+
+          // Quantity & Notes
+          '<div class="formgrid-2" style="margin-top:1rem;">' +
+            '<div><label>Output Quantity (units) <span class="req">*</span></label>' +
+              '<input type="number" id="update-qty" placeholder="e.g. ' + (job.quantity || 2000) + '" value="' + (job.quantity || "") + '" min="1" required>' +
+            '</div>' +
+            '<div><label>Rejected / Waste</label>' +
+              '<input type="number" id="update-rejected" placeholder="Units rejected" min="0" value="0">' +
+            '</div>' +
+          '</div>' +
+
+          '<div style="margin-top:0.5rem;">' +
+            '<label>Notes for all departments <span class="req">*</span></label>' +
+            '<textarea id="update-notes" rows="3" placeholder="Describe what was done, any issues, quality observations, machine settings..."></textarea>' +
+          '</div>' +
+
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn" onclick="orbitStopCamera();document.getElementById(\'prod-modal-container\').innerHTML=\'\'">Cancel</button>' +
+          '<button class="btn btn-primary btn-lg" onclick="submitStageUpdate(\'' + jobId + '\')">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">' +
+              '<polyline points="20 6 9 17 4 12"/>' +
+            '</svg>' +
+            'Submit & Notify All Departments' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ===== Camera Functions ===== */
+async function startCamera(){
+  const box = document.getElementById("camera-box");
+  box.innerHTML = '<video id="camera-video" autoplay playsinline style="width:100%;"></video>';
+  const video = document.getElementById("camera-video");
+  const started = await orbitStartCamera(video);
+  if(!started){
+    box.innerHTML = '<div style="color:var(--danger);padding:10px;">Camera access denied. Please use "Upload File" instead.</div>';
+  }
+}
+
+function capturePhoto(){
+  const video = document.getElementById("camera-video");
+  if(!video || !video.srcObject){
+    orbitToast("Start the camera first or upload a file", "warning");
+    return;
+  }
+  const canvas = document.createElement("canvas");
+  const photoData = orbitCapturePhoto(video, canvas);
+  currentPhotoProof = photoData;
+  document.getElementById("proof-preview").innerHTML =
+    '<img src="' + photoData + '" style="width:100%;border-radius:8px;display:block;">';
+  orbitStopCamera();
+  document.getElementById("camera-box").innerHTML = '<div style="color:var(--success);padding:10px;font-weight:600;">Photo captured ✓</div>';
+}
+
+function uploadPhoto(){
+  document.getElementById("photo-upload-input").click();
+}
+
+async function handlePhotoUpload(){
+  const input = document.getElementById("photo-upload-input");
+  const photoData = await orbitHandleFileUpload(input);
+  if(photoData){
+    currentPhotoProof = photoData;
+    document.getElementById("proof-preview").innerHTML =
+      '<img src="' + photoData + '" style="width:100%;border-radius:8px;display:block;">';
+  }
+}
+
+/* ===== Submit Stage Update ===== */
+function submitStageUpdate(jobId){
+  const qty = parseInt(document.getElementById("update-qty").value) || 0;
+  const rejected = parseInt(document.getElementById("update-rejected").value) || 0;
+  const notes = document.getElementById("update-notes").value.trim();
+
+  if(qty <= 0){
+    orbitToast("Please enter a valid output quantity", "warning");
+    document.getElementById("update-qty").focus();
+    return;
+  }
+  if(!currentPhotoProof){
+    orbitToast("Photo proof is required — capture or upload a photo", "warning");
+    return;
+  }
+  if(!notes){
+    orbitToast("Please add notes for the departments", "warning");
+    document.getElementById("update-notes").focus();
+    return;
+  }
+
+  const user = ORBIT_USERS[__uid];
+  const job = orbitGetJob(jobId);
+  const currentStageName = ORBIT_STAGES[job.stage]?.name || "Production";
+
+  // Advance stage
+  orbitAdvanceStage(
+    jobId,
+    qty,
+    user?.name || "Production",
+    notes + (rejected > 0 ? " (Rejected: " + rejected + ")" : ""),
+    currentPhotoProof
+  );
+
+  orbitLogAction(jobId + ": " + currentStageName + " completed — " + qty.toLocaleString() + " units", "success");
+
+  // Close modal
+  orbitStopCamera();
+  document.getElementById("prod-modal-container").innerHTML = "";
+
+  // Refresh
+  renderProductionOrders();
+}
+
+/* ===== QR Scanner Modal (simulated) ===== */
+function openQRScanner(){
+  const modal = document.getElementById("prod-modal-container");
+  modal.innerHTML =
+    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+      '<div class="modal" style="max-width:480px;">' +
+        '<div class="modal-header">' +
+          '<h2>Scan Job QR Code</h2>' +
+          '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').parentElement.innerHTML=\'\'">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div class="camera-container" style="min-height:240px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;">' +
+            '<div style="position:relative;width:200px;height:200px;">' +
+              '<div style="position:absolute;inset:0;border:3px solid var(--brand-red);border-radius:12px;animation:scanPulse 2s ease-in-out infinite;"></div>' +
+              '<div style="position:absolute;left:0;right:0;top:50%;height:2px;background:var(--brand-red);box-shadow:0 0 10px var(--brand-red);animation:scanLine 2s ease-in-out infinite;"></div>' +
+            '</div>' +
+            '<div style="color:var(--ink-light);font-size:12.5px;text-align:center;">Position the QR code within the frame<br>or select a job manually below</div>' +
+          '</div>' +
+          '<style>@keyframes scanLine{0%,100%{top:10%;}50%{top:90%;}}@keyframes scanPulse{0%,100%{opacity:1;}50%{opacity:0.6;}}</style>' +
+          '<div style="margin-top:1rem;">' +
+            '<label>Or enter Job ID manually</label>' +
+            '<input type="text" id="manual-job-id" placeholder="e.g. JOB-0001" style="margin-bottom:8px;">' +
+            '<button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="manualQRSubmit()">' +
+              'Open Job for Update' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function manualQRSubmit(){
+  const jobId = document.getElementById("manual-job-id").value.trim().toUpperCase();
+  if(!jobId){ orbitToast("Enter a Job ID", "warning"); return; }
+  const job = orbitGetJob(jobId);
+  if(!job){ orbitToast("Job not found: " + jobId, "danger"); return; }
+  if(job.stage < 3){ orbitToast(jobId + " is not in production yet", "warning"); return; }
+  if(job.stage >= 13){ orbitToast(jobId + " is already delivered", "warning"); return; }
+  document.getElementById("prod-modal-container").innerHTML = "";
+  openStageUpdate(jobId);
+}
+
+/* ===== Initialize ===== */
+renderProductionOrders();
+
+} // end auth check
+
+/* ===== Print Production Job Sheet for Workers ===== */
+function printProductionJobSheet(jobId){
+  const job = orbitGetJob(jobId);
+  if(!job) return;
+  const sd = job.salesData || {};
+  const currentStage = ORBIT_STAGES[Math.min(job.stage, ORBIT_STAGES.length - 1)];
+  const qrUrl = orbitGenerateQRUrl(jobId, 180);
+  const qty = job.quantity ? job.quantity.toLocaleString() : "—";
+  const finishing = sd.finishing && sd.finishing.length ? sd.finishing.join(", ") : "—";
+  const descHtml = job.description ? "<div class=\'section-title\'>📝 Order Description</div><p style=\'margin:4px 0;line-height:1.5;\'>" + job.description.replace(/'/g, "\'") + "</p>" : "";
+
+  const printWindow = window.open("", "_blank");
+  if(!printWindow){ orbitToast("Please allow pop-ups to print", "warning"); return; }
+
+  const html = "<!DOCTYPE html><html><head><title>Job Sheet — " + jobId + "</title>" +
+  "<style>" +
+  "body{font-family:Arial,sans-serif;padding:20px;color:#000;font-size:13px;max-width:800px;margin:0 auto;}" +
+  "h1{color:#C0272B;border-bottom:2px solid #000;padding-bottom:6px;margin:0 0 4px;font-size:22px;}" +
+  ".subtitle{color:#666;font-size:11px;font-style:italic;margin-bottom:14px;}" +
+  ".info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}" +
+  ".info-box{border:1.5px solid #333;padding:10px;border-radius:4px;}" +
+  ".info-box .lbl{font-size:10px;text-transform:uppercase;color:#666;font-weight:bold;margin-bottom:3px;}" +
+  ".info-box .val{font-weight:bold;font-size:14px;}" +
+  ".current-stage{background:#C0272B;color:#fff;padding:12px;border-radius:6px;text-align:center;font-size:16px;font-weight:bold;margin:12px 0;}" +
+  ".qr-section{text-align:center;margin:14px 0;padding:12px;border:2px dashed #666;border-radius:8px;}" +
+  ".qr-section img{width:140px;height:140px;}" +
+  "table{width:100%;border-collapse:collapse;margin:10px 0;}" +
+  "th,td{border:1px solid #333;padding:8px;text-align:left;font-size:12px;}" +
+  "th{background:#f0f0f0;font-weight:bold;}" +
+  ".section-title{font-weight:bold;font-size:14px;color:#C0272B;margin:14px 0 6px;border-bottom:1px solid #333;padding-bottom:3px;}" +
+  ".spec-list{margin:6px 0;padding-left:20px;}" +
+  ".spec-list li{margin:3px 0;}" +
+  ".sign-area{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px;}" +
+  ".sign-line{border-top:1px solid #000;padding-top:4px;text-align:center;font-size:11px;}" +
+  ".footer{margin-top:20px;padding-top:10px;border-top:1px solid #999;font-size:10px;color:#666;display:flex;justify-content:space-between;}" +
+  "@media print{body{padding:0;}}" +
+  "</style><\/head><body>" +
+  "<h1>PRODUCTION JOB SHEET</h1>" +
+  "<div class=\'subtitle\'>Sarman Printing Sdn Bhd &middot; Printed: " + orbitNow() + "</div>" +
+  "<div class=\'info-grid\'>" +
+    "<div class=\'info-box\'><div class=\'lbl\'>Job ID</div><div class=\'val\' style=\'font-family:Courier,monospace;font-size:18px;\'>" + jobId + "</div></div>" +
+    "<div class=\'info-box\'><div class=\'lbl\'>Quantity</div><div class=\'val\'>" + qty + " units</div></div>" +
+    "<div class=\'info-box\'><div class=\'lbl\'>Customer</div><div class=\'val\'>" + job.client + "</div></div>" +
+    "<div class=\'info-box\'><div class=\'lbl\'>Deadline</div><div class=\'val\'>" + (job.deadline || "—") + "</div></div>" +
+  "</div>" +
+  "<div class=\'current-stage\'>CURRENT STAGE: " + currentStage.name.toUpperCase() + "</div>" +
+  "<div style=\'margin:-4px 0 12px;font-size:12px;\'><strong>Process route:</strong> " + orbitJobStageList(job).map(i => ORBIT_STAGES[i].name).join(" &rarr; ") + " &rarr; Delivery</div>" +
+  "<div class=\'qr-section\'>" +
+    "<img src=\'" + qrUrl + "\' alt=\'QR " + jobId + "\'><br>" +
+    "<strong style=\'font-family:Courier,monospace;\'>" + jobId + "</strong><br>" +
+    "<span style=\'font-size:10px;color:#666;\'>Scan QR with phone to view details & update stage</span>" +
+  "</div>" +
+  "<div class=\'section-title\'>📋 Product Specification</div>" +
+  "<table>" +
+    "<tr><th style=\'width:25%;\'>Product</th><td>" + (job.product || "—") + "</td><th style=\'width:25%;\'>Urgency</th><td>" + (job.urgent || "normal") + "</td></tr>" +
+    "<tr><th>Paper Type</th><td>" + (sd.paperType || "—") + "</td><th>GSM</th><td>" + (sd.gsm || "—") + "</td></tr>" +
+    "<tr><th>Colour</th><td>" + (sd.colour || "—") + "</td><th>Print Side</th><td>" + (sd.printSide || "—") + "</td></tr>" +
+    "<tr><th>Finishing</th><td colspan=\'3\'>" + finishing + "</td></tr>" +
+  "</table>" +
+  descHtml +
+  "<div class=\'section-title\'>✅ Worker Checklist</div>" +
+  "<ul class=\'spec-list\'>" +
+    "<li>Scan QR code with phone to confirm you have the correct job</li>" +
+    "<li>Verify paper type, GSM, and colour match this sheet</li>" +
+    "<li>Check quantity matches: <strong>" + qty + " units</strong></li>" +
+    "<li>Follow all finishing specifications above</li>" +
+    "<li>After completing work, scan QR again and tap <strong>Complete Stage</strong> with photo proof</li>" +
+    "<li>Report any issues to supervisor immediately</li>" +
+  "</ul>" +
+  "<div class=\'sign-area\'>" +
+    "<div><div class=\'sign-line\'>Worker Name & Signature</div></div>" +
+    "<div><div class=\'sign-line\'>Supervisor Check & Date</div></div>" +
+  "</div>" +
+  "<div class=\'footer\'><span>ORBIT Production Job Sheet</span><span>" + jobId + "</span><span>Page 1 of 1</span></div>" +
+  "<\/body></html>";
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 500);
+}
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price Reference · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">
+        <img src="assets/logo.png" alt="Sarman Printing" class="brand-logo-img" style="height:48px;width:auto;" aria-hidden="true">
+        <div><div class="topbar-brand-text">ORBIT</div>
+        <div class="topbar-brand-sub">Sarman Printing &middot; Price Reference</div></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn" onclick="window.close()" title="Close this tab">Close Tab</button>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <h1>Price Reference</h1>
+      <p class="page-desc">Latest material &amp; process price list. Keep this tab open alongside the order form.</p>
+      <p class="note" id="price-ref-synced" style="display:inline-block;margin-top:6px;"></p>
+    </div>
+
+    <div class="card accent-top">
+      <div id="price-ref-body">
+        <p class="note">Loading price-reference.xlsx&hellip;</p>
+      </div>
+    </div>
+  </main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// Require login, but any logged-in staff member may view this page
+if(orbitGetUid() === null){
+  location.href = "staff-login.html";
+}
+
+fetch("assets/price-reference.xlsx")
+  .then(res => {
+    if(!res.ok) throw new Error("File not found (" + res.status + ")");
+    const lastMod = res.headers.get("last-modified");
+    if(lastMod){
+      document.getElementById("price-ref-synced").textContent =
+        "File last updated: " + new Date(lastMod).toLocaleString('en-MY', {dateStyle:"medium", timeStyle:"short"});
+    }
+    return res.arrayBuffer();
+  })
+  .then(buf => {
+    const wb = XLSX.read(buf, {type:"array"});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+    renderPriceRefTable(rows);
+  })
+  .catch(err => {
+    document.getElementById("price-ref-body").innerHTML =
+      '<p class="note" style="color:var(--danger);">Couldn\'t load the price list (' + err.message + ').</p>' +
+      '<p class="note">Try <a href="assets/price-reference.xlsx" target="_blank" rel="noopener">opening the file directly</a> instead.</p>';
+  });
+
+function renderPriceRefTable(rows){
+  // Skip leading blank/title rows, find the header row (row containing "Category")
+  let headerIdx = rows.findIndex(r => r.some(c => String(c).trim().toLowerCase() === "category"));
+  if(headerIdx === -1) headerIdx = 0;
+
+  const titleRows = rows.slice(0, headerIdx).filter(r => r.some(c => String(c).trim() !== ""));
+  const header = rows[headerIdx];
+  const dataRows = rows.slice(headerIdx + 1).filter(r => r.some(c => String(c).trim() !== ""));
+
+  let html = "";
+  titleRows.forEach((r, i) => {
+    const text = r.filter(c => String(c).trim() !== "").join(" — ");
+    html += '<p class="' + (i === 0 ? "" : "note") + '" style="' + (i === 0 ? "font-weight:700;margin-bottom:2px;" : "margin-bottom:14px;") + '">' + text + '</p>';
+  });
+
+  html += '<div style="overflow-x:auto;"><table><thead><tr>' +
+    header.map(h => '<th>' + (h || "") + '</th>').join("") +
+    '</tr></thead><tbody>';
+
+  dataRows.forEach(r => {
+    // A row that's just a trailing note (single populated cell) spans the full width
+    const filled = r.filter(c => String(c).trim() !== "");
+    if(filled.length === 1){
+      html += '<tr><td colspan="' + header.length + '" class="note" style="font-style:italic;">' + filled[0] + '</td></tr>';
+      return;
+    }
+    html += '<tr>' + header.map((h, i) => {
+      let val = r[i] !== undefined ? r[i] : "";
+      if(String(h).toLowerCase().indexOf("price") !== -1 && val !== ""){
+        val = orbitFormatRM(val);
+      }
+      return '<td>' + val + '</td>';
+    }).join("") + '</tr>';
+  });
+
+  html += '</tbody></table></div>' +
+    '<div style="display:flex;justify-content:flex-end;margin-top:1rem;">' +
+      '<a class="excel-btn" href="assets/price-reference.xlsx" download>Download Excel</a>' +
+    '</div>';
+
+  document.getElementById("price-ref-body").innerHTML = html;
+}
+</script>
+
+</body>
+</html>

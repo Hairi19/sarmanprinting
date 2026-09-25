@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Order · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.form-section{margin-bottom:1.75rem;}
+.form-section-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:16px;font-weight:700;font-family:var(--font-heading);
+  color:var(--ink);margin-bottom:1rem;padding-bottom:8px;border-bottom:2px solid var(--line);
+}
+.form-section-title::before{
+  content:'';width:4px;height:20px;background:var(--brand-red);border-radius:2px;
+}
+.form-section-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;background:var(--brand-red);color:#fff;
+  font-size:13px;font-weight:700;font-family:var(--font-heading);margin-right:4px;
+}
+.conditional-section{
+  display:none;padding:14px 16px;background:var(--surface-alt);
+  border:1.5px dashed var(--line);border-radius:var(--radius);
+  margin-bottom:16px;animation:fadeIn 0.25s ease;
+}
+.conditional-section.show{display:block;}
+.urgency-option{
+  display:flex;align-items:center;gap:12px;padding:14px 18px;
+  border:2px solid var(--line);border-radius:var(--radius);cursor:pointer;
+  transition:all 0.15s ease;background:var(--surface);
+}
+.urgency-option:hover{border-color:var(--brand-red-soft);}
+.urgency-option input{margin:0;accent-color:var(--brand-red);width:18px;height:18px;}
+.urgency-option .urgency-label{font-weight:700;font-size:14px;}
+.urgency-option .urgency-surcharge{
+  font-size:11px;padding:2px 8px;border-radius:999px;font-weight:700;margin-left:6px;
+}
+.urgency-option .urgency-desc{font-size:12px;color:var(--ink-light);margin-top:2px;}
+.urgency-option.normal .urgency-surcharge{background:var(--success-bg);color:var(--success);}
+.urgency-option.urgent .urgency-surcharge{background:var(--urgent-bg);color:var(--urgent);}
+.urgency-option.super-urgent .urgency-surcharge{background:var(--super-urgent-bg);color:var(--super-urgent);}
+.urgency-option:has(input:checked){border-color:var(--brand-red);background:var(--brand-red-light);}
+.urgency-option.urgent:has(input:checked){border-color:var(--urgent);background:var(--urgent-bg);}
+.urgency-option.super-urgent:has(input:checked){border-color:var(--super-urgent);background:var(--super-urgent-bg);}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Create New Sale Order</h1>
+      <p class="page-desc">
+        <strong>Form 1 of 4.</strong> Complete all fields from the paper Sale Order form.
+        A unique QR code will be generated for this order upon creation.
+      </p>
+    </div>
+
+    <div class="card accent-top">
+      <form id="new-order-form" onsubmit="return false;">
+
+        <!-- SECTION 1: Basic Information -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">1</span>Basic Information</div>
+          <div class="formgrid-3">
+            <div><label>Sale Person <span class="req">*</span></label>
+              <select id="f1-sales-person" required>
+                <option value="">Select sales person...</option>
+                <option value="">(assign after adding staff in Admin)</option>
+              </select>
+            </div>
+            <div><label>Order Date <span class="req">*</span></label><input type="date" id="f1-order-date" required></div>
+            <div><label>Delivery Date <span class="req">*</span></label><input type="date" id="f1-delivery-date" required></div>
+          </div>
+          <div class="formgrid-2">
+            <div><label>Customer Name <span class="req">*</span></label><input type="text" id="f1-customer" placeholder="e.g. Customer Name Sdn Bhd" required></div>
+            <div><label>Designer Assignment</label>
+              <select id="f1-designer">
+                <option value="">Open to any designer (first to accept)</option>
+                <option value="Design Pool">Design Pool (open to any designer)</option>
+              </select>
+            </div>
+          </div>
+          <div><label>Job Description <span class="req">*</span></label>
+            <textarea id="f1-description" rows="3" placeholder="Describe the print job in detail..." required></textarea>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Job Type & Urgency -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">2</span>Job Type &amp; Urgency</div>
+          <div class="formgrid-2">
+            <div>
+              <label>Job Type <span class="req">*</span></label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" name="f1-jobtype" value="new" checked> New Job</label>
+                <label class="radio-option"><input type="radio" name="f1-jobtype" value="repeat"> Repeat</label>
+                <label class="radio-option"><input type="radio" name="f1-jobtype" value="reprint"> Re-print</label>
+              </div>
+            </div>
+            <div>
+              <label>Urgency Level <span class="req">*</span></label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label class="urgency-option normal">
+                  <input type="radio" name="f1-urgency" value="normal" checked>
+                  <div><div><span class="urgency-label">Normal</span><span class="urgency-surcharge">Standard</span></div>
+                  <div class="urgency-desc">Standard production timeline</div></div>
+                </label>
+                <label class="urgency-option urgent">
+                  <input type="radio" name="f1-urgency" value="urgent">
+                  <div><div><span class="urgency-label">Urgent</span><span class="urgency-surcharge">+15% Surcharge</span></div>
+                  <div class="urgency-desc">Expedited processing — prioritize this job</div></div>
+                </label>
+                <label class="urgency-option super-urgent">
+                  <input type="radio" name="f1-urgency" value="super-urgent">
+                  <div><div><span class="urgency-label">Super Urgent</span><span class="urgency-surcharge">+30% Surcharge</span></div>
+                  <div class="urgency-desc">Immediate — highest priority across all departments</div></div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Product Specification -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">3</span>Product Specification</div>
+          <div class="formgrid-3">
+            <div><label>Product Printing Type <span class="req">*</span></label>
+              <select id="f1-product-type" onchange="toggleConditionalSections()" required>
+                <option value="">Select product type...</option>
+                <option value="box">Box / Packaging</option><option value="paperbag">Paperbag</option>
+                <option value="flyer">Flyer</option><option value="card">Card</option>
+                <option value="namecard">Name Card</option><option value="book">Book</option>
+                <option value="voucher">Voucher</option><option value="billbook">Bill Book</option>
+                <option value="banner">Banner</option><option value="bunting">Bunting</option>
+                <option value="rollup">Roll up</option><option value="corrugated">Corrugated Box</option>
+                <option value="sampul">Sampul Raya</option><option value="sticker">Sticker</option>
+              </select>
+            </div>
+            <div><label>Open Size</label><input type="text" id="f1-open-size" placeholder='e.g. A4, 25" x 35.5"'></div>
+            <div><label>Quantity <span class="req">*</span></label><input type="number" id="f1-quantity" placeholder="e.g. 2000" min="1" required></div>
+          </div>
+
+          <div class="conditional-section" id="sticker-section">
+            <label style="color:var(--ink);font-size:13px;">Sticker Sub-Type</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="mirrorkote"> Mirrorkote</label>
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="transparent"> Transparent</label>
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="silver-gold"> Silver / Gold</label>
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="white-pp"> White PP</label>
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="white-sticker"> White Sticker</label>
+              <label class="radio-option"><input type="radio" name="f1-sticker-type" value="oneway"> OneWay Vision</label>
+            </div>
+          </div>
+
+          <div class="conditional-section" id="booklet-section">
+            <label style="color:var(--ink);font-size:13px;margin-bottom:10px;">Booklet Specifications</label>
+            <div class="formgrid-3" style="margin-bottom:12px;">
+              <div><label>Total Pages (Cover)</label><input type="number" id="f1-pages-cover" placeholder="e.g. 4"></div>
+              <div><label>Total Pages (Text)</label><input type="number" id="f1-pages-text" placeholder="e.g. 32"></div>
+              <div><label>Total Section</label><input type="number" id="f1-section" placeholder="e.g. 4"></div>
+            </div>
+            <label>Binding Type</label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="f1-binding" value="stapler"> Stapler Binding</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="comb"> Comb Binding</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="perfect"> Perfect Binding</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="folding"> Folding</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="thread"> Thread Sewing</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="wire-o"> Wire O</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="glue"> Glue</label>
+              <label class="radio-option"><input type="radio" name="f1-binding" value="other"> Other</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Material & Colour -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">4</span>Material &amp; Colour</div>
+          <div class="formgrid-3">
+            <div><label>Paper Type</label><input type="text" id="f1-paper-type" placeholder="e.g. Art Card, Art Paper"></div>
+            <div><label>Paper GSM</label><input type="number" id="f1-gsm" placeholder="e.g. 300" min="1"></div>
+            <div><label>Print Side</label>
+              <div class="radio-group">
+                <label class="radio-option"><input type="radio" name="f1-printside" value="single" checked> Single Side</label>
+                <label class="radio-option"><input type="radio" name="f1-printside" value="double"> Double Side</label>
+              </div>
+            </div>
+          </div>
+          <label>Colour Mode <span class="req">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="f1-colour" value="CMYK" checked> CMYK</label>
+            <label class="radio-option"><input type="radio" name="f1-colour" value="Black"> Black</label>
+            <label class="radio-option"><input type="radio" name="f1-colour" value="White Base"> White Base</label>
+            <label class="radio-option"><input type="radio" name="f1-colour" value="Pantone"> Pantone</label>
+          </div>
+        </div>
+
+        <!-- SECTION 5: Product Finishing -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">5</span>Product Finishing</div>
+          <fieldset class="orbit-fieldset">
+            <legend>Select all applicable finishing options</legend>
+            <div class="checkrow">
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Gloss Lamination"> Gloss Lamination</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Matt Lamination"> Matt Lamination</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="UV"> UV</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Varnish / Waterbase"> Varnish / Waterbase</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Sand Blast"> Sand Blast</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Hot Stamping"> Hot Stamping</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Emboss"> Emboss</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Deboss"> Deboss</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Spot UV"> Spot UV</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Glue Type"> Glue Type</label>
+              <label class="chk"><input type="checkbox" name="f1-finishing" value="Other"> Other</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- SECTION 6: Cutting & Other Finishing -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">6</span>Cutting &amp; Other Finishing</div>
+          <fieldset class="orbit-fieldset">
+            <legend>Cutting / additional finishing operations</legend>
+            <div class="checkrow">
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Perforation Line"> Perforation Line</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Creasing Line"> Creasing Line</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Tali"> Tali</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="PVC Window"> PVC Window</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Double Side Tape"> Double Side Tape</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Liquid Glue"> Liquid Glue</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Die Cut New"> Die Cut (New)</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Die Cut Old"> Die Cut (Old)</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Plotter Cut"> Plotter Cut</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Cut to Size"> Cut to Size</label>
+              <label class="chk"><input type="checkbox" name="f1-cutting" value="Numbering Start"> Numbering Start</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- SECTION 7: Pricing & Remarks -->
+        <div class="form-section">
+          <div class="form-section-title"><span class="form-section-num">7</span>Pricing &amp; Remarks</div>
+          <div class="formgrid-3">
+            <div><label>Company Cost (RM)</label><input type="number" id="f1-cost" placeholder="e.g. 480.00" step="0.01" min="0"></div>
+            <div><label>Customer Price (RM) <span class="req">*</span></label><input type="number" id="f1-price" placeholder="e.g. 768.00" step="0.01" min="0" required></div>
+            <div><label>Estimated Margin</label><input type="text" id="f1-margin" readonly placeholder="Auto-calculated" style="background:var(--surface-alt);font-family:var(--font-mono);font-weight:600;color:var(--success);"></div>
+          </div>
+          <div><label>Remarks / Special Instructions</label>
+            <textarea id="f1-remarks" rows="3" placeholder="Any additional notes..."></textarea>
+          </div>
+        </div>
+
+        <!-- FORM ACTIONS -->
+        <div class="job-actions" style="border-top:2px solid var(--line);padding-top:1.25rem;justify-content:flex-end;">
+          <button type="button" class="btn" onclick="location.href='sales.html'+location.search">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>Cancel
+          </button>
+          <button type="button" class="excel-btn" onclick="exportThisForm()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>Export Form to Excel
+          </button>
+          <button type="button" class="btn btn-primary btn-lg" onclick="submitOrder()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>Create Order &amp; Generate QR
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("sales.html", "Order Intake · Sales");
+/* populate staff selects from real employee list */
+(function(){
+  try{
+    const emps = orbitGetEmployees();
+    const sp = document.getElementById("f1-sales-person");
+    if(sp){
+      emps.filter(e => (e.dept||"").toLowerCase()==="sales" || (e.pages||[]).indexOf("sales.html") !== -1)
+        .forEach(e => { const o=document.createElement("option"); o.value=e.name; o.textContent=e.name; sp.appendChild(o); });
+    }
+    const ds = document.getElementById("f1-designer");
+    if(ds){
+      emps.filter(e => (e.dept||"").toLowerCase()==="design" || (e.pages||[]).indexOf("designer.html") !== -1)
+        .forEach(e => { const o=document.createElement("option"); o.value=e.name; o.textContent=e.name; ds.appendChild(o); });
+    }
+  }catch(e){}
+})();
+
+if(__uid !== null){
+
+// Set today's date
+document.getElementById("f1-order-date").valueAsDate = new Date();
+
+// Auto-calculate margin
+function updateMargin(){
+  const cost = parseFloat(document.getElementById("f1-cost").value) || 0;
+  const price = parseFloat(document.getElementById("f1-price").value) || 0;
+  const marginEl = document.getElementById("f1-margin");
+  if(cost > 0 && price > 0){
+    const margin = price - cost;
+    const pct = ((margin / cost) * 100).toFixed(1);
+    marginEl.value = orbitFormatRM(margin) + " (" + pct + "%)";
+  } else if(price > 0){
+    marginEl.value = orbitFormatRM(price) + " (cost not set)";
+  } else {
+    marginEl.value = "";
+  }
+}
+document.getElementById("f1-cost").addEventListener("input", updateMargin);
+document.getElementById("f1-price").addEventListener("input", updateMargin);
+
+// Toggle conditional sections
+function toggleConditionalSections(){
+  const type = document.getElementById("f1-product-type").value;
+  document.getElementById("sticker-section").classList.toggle("show", type === "sticker");
+  document.getElementById("booklet-section").classList.toggle("show", type === "book");
+}
+
+function getSelectedUrgency(){
+  const sel = document.querySelector('input[name="f1-urgency"]:checked');
+  return sel ? sel.value : "normal";
+}
+
+function getProductLabel(){
+  const sel = document.getElementById("f1-product-type");
+  return sel.options[sel.selectedIndex]?.text || "";
+}
+
+// Export current form to Excel
+function exportThisForm(){
+  const customer = document.getElementById("f1-customer").value || "New Order";
+  const headers = ["Field", "Value"];
+  const rows = [
+    ["Sale Person", document.getElementById("f1-sales-person").value],
+    ["Order Date", document.getElementById("f1-order-date").value],
+    ["Delivery Date", document.getElementById("f1-delivery-date").value],
+    ["Customer Name", document.getElementById("f1-customer").value],
+    ["Designer", document.getElementById("f1-designer").value],
+    ["Job Description", document.getElementById("f1-description").value],
+    ["Job Type", document.querySelector('input[name="f1-jobtype"]:checked')?.value || ""],
+    ["Urgency", getSelectedUrgency()],
+    ["Product Type", getProductLabel()],
+    ["Open Size", document.getElementById("f1-open-size").value],
+    ["Quantity", document.getElementById("f1-quantity").value],
+    ["Paper Type", document.getElementById("f1-paper-type").value],
+    ["GSM", document.getElementById("f1-gsm").value],
+    ["Print Side", document.querySelector('input[name="f1-printside"]:checked')?.value || ""],
+    ["Colour Mode", document.querySelector('input[name="f1-colour"]:checked')?.value || ""],
+    ["Company Cost", document.getElementById("f1-cost").value],
+    ["Customer Price", document.getElementById("f1-price").value],
+    ["Remarks", document.getElementById("f1-remarks").value]
+  ];
+  orbitExportToCSV("Order_Form_" + customer.replace(/[^a-zA-Z0-9]/g, "_"), headers, rows);
+  orbitToast("Form exported to Excel/CSV", "success");
+}
+
+// Submit order
+function submitOrder(){
+  const required = [
+    {id:"f1-customer", label:"Customer Name"},
+    {id:"f1-description", label:"Job Description"},
+    {id:"f1-product-type", label:"Product Type"},
+    {id:"f1-quantity", label:"Quantity"},
+    {id:"f1-price", label:"Customer Price"}
+  ];
+
+  for(const field of required){
+    const el = document.getElementById(field.id);
+    if(!el.value.trim()){
+      orbitToast("Please fill in: " + field.label, "warning");
+      el.focus();
+      el.scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+  }
+
+  const urgency = getSelectedUrgency();
+  const productType = getProductLabel();
+  const qty = parseInt(document.getElementById("f1-quantity").value) || 0;
+  const customer = document.getElementById("f1-customer").value.trim();
+  const user = ORBIT_USERS[__uid];
+
+  // Collect finishing options
+  const finishing = Array.from(document.querySelectorAll('input[name="f1-finishing"]:checked')).map(c => c.value);
+  const cutting = Array.from(document.querySelectorAll('input[name="f1-cutting"]:checked')).map(c => c.value);
+
+  // Create job
+  const job = orbitAddJob({
+    client: customer,
+    urgent: urgency,
+    stage: 1,
+    stageName: "Design",
+    status: "waiting",
+    statusLabel: "Awaiting Design",
+    product: productType,
+    quantity: qty,
+    deadline: document.getElementById("f1-delivery-date").value,
+    salesPerson: document.getElementById("f1-sales-person").value || user?.name || "Sales",
+    description: document.getElementById("f1-description").value,
+    price: parseFloat(document.getElementById("f1-price").value) || 0,
+    cost: parseFloat(document.getElementById("f1-cost").value) || 0,
+    salesData: {
+      paperType: document.getElementById("f1-paper-type").value,
+      gsm: document.getElementById("f1-gsm").value,
+      colour: document.querySelector('input[name="f1-colour"]:checked')?.value || "CMYK",
+      printSide: document.querySelector('input[name="f1-printside"]:checked')?.value || "single",
+      finishing: finishing,
+      cutting: cutting
+    },
+    designData: {
+      designer: document.getElementById("f1-designer").value || "Design Pool",
+      status: "pending"
+    },
+    plannerData: {verified: false},
+    productionHistory: []
+  });
+
+  // Notify Design department
+  orbitNotifyDepartments(
+    job.id, customer, 1,
+    "New order: " + job.id + " — " + productType + " (" + qty.toLocaleString() + " units)" +
+    (orbitIsUrgent(urgency) ? " — " + urgency.toUpperCase() : ""),
+    ["designer.html", "submit-design.html"]
+  );
+
+  // Show success modal with QR code
+  showSuccessModal(job);
+}
+
+function showSuccessModal(job){
+  const modal = document.createElement("div");
+  modal.innerHTML =
+    '<div class="modal-overlay">' +
+      '<div class="modal" style="max-width:480px;text-align:center;">' +
+        '<div class="modal-header" style="background:var(--success-bg);border-bottom-color:#C8E6C9;">' +
+          '<h2 style="color:var(--success-dark);">Order Created Successfully!</h2>' +
+          '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').parentElement.remove();location.href=\'sales.html' + location.search + '\'">&times;</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="font-size:15px;margin-bottom:1rem;">' +
+            '<div><strong>Job ID:</strong> <span class="mono" style="color:var(--brand-red);font-size:18px;">' + job.id + '</span></div>' +
+            '<div style="margin-top:4px;color:var(--ink-light);">' + job.client + ' &middot; ' + job.product + '</div>' +
+          '</div>' +
+          '<div class="qr-card" style="margin:0 auto 1rem;max-width:240px;">' +
+            '<div class="qr-label">Order QR Code</div>' +
+            orbitQRImageTag(job.id, 160, "qr-code") +
+            '<div class="qr-job-id">' + job.id + '</div>' +
+            '<div class="qr-hint">Scan to track order</div>' +
+          '</div>' +
+          '<p class="note" style="text-align:left;">' +
+            'A notification has been sent to the <strong>Design department</strong>. ' +
+            'Each order has a unique QR code that travels with it through all production stages.' +
+          '</p>' +
+          '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:1rem;">' +
+            '<a class="btn btn-primary" href="qr-view.html?job=' + encodeURIComponent(job.id) + '" target="_blank">Open Tracking Page</a>' +
+            '<button class="print-btn" onclick="window.print()">Print Job Sheet</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-primary btn-lg" onclick="location.href=\'sales.html' + location.search + '\'">Back to Sales Queue</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+} // end auth check
+</script>
+
+</body>
+</html>
