@@ -253,7 +253,7 @@ function showModal(data, title){
         '<div id="emp-modal-error" style="display:none;color:#C0272B;background:#FDECEA;border:1px solid #F5C6C0;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>' +
         '<div class="modal-footer">' +
           '<button class="btn" onclick="closeModal()">Cancel</button>' +
-          '<button class="btn btn-primary" id="emp-save-btn" onclick="var b=this;b.disabled=true;b.textContent=\'Saving…\';try{saveEmployee();}catch(e){alert(\'Save button error: \'+e.message);b.disabled=false;b.textContent=\'Save Employee\';}">Save Employee</button>' +
+          '<button class="btn btn-primary" id="emp-save-btn" onclick="saveEmployeeClick(this)">Save Employee</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -273,6 +273,20 @@ function closeModal(){
 }
 
 /* ===== Save Employee ===== */
+/* Wrapper: instant button feedback + catch any error, even if saveEmployee itself fails */
+function saveEmployeeClick(btn){
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+  try{
+    saveEmployee();
+  }catch(err){
+    empError("Save error: " + (err && err.message ? err.message : String(err)));
+    console.error(err);
+    btn.disabled = false;
+    btn.textContent = "Save Employee";
+  }
+}
+
 /* Show a validation error inside the modal (impossible to miss) + toast */
 function empError(msg, focusId){
   const e = document.getElementById("emp-modal-error");
