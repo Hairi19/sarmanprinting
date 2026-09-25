@@ -183,7 +183,7 @@ function confirmDelete(id){
 function openAddModal(){
   editingId = null;
   showModal({
-    name: "", surname: "", email: "",
+    name: "", surname: "", email: "", password: "",
     role: "", dept: "", landing: "sales.html", pages: ["sales.html"]
   }, "Add New Employee");
 }
@@ -242,7 +242,7 @@ function showModal(data, title){
           '</div>' +
           '<div class="formgrid-2">' +
             '<div><label>Email <span class="req">*</span></label><input type="email" id="emp-email" value="' + (data.email || '') + '" placeholder="e.g. ali@company.com"></div>' +
-            '<div><label>Login Password</label><div class="note" style="margin:0;font-size:11px;line-height:1.5;">Set in <strong>Supabase Dashboard → Authentication → Users</strong> using the same email. The staff member\'s first login auto-links to this profile.</div></div>' +
+            '<div><label>Login Password ' + (editingId === null ? '<span class="req">*</span>' : '') + '</label><input type="text" id="emp-password" value="' + (data.password || '') + '" placeholder="' + (editingId === null ? 'Set staff login password (min 6 chars)' : 'Leave blank — password unchanged') + '"></div>' +
           '</div>' +
           '<div style="margin-top:8px;">' +
             '<label>Page Access Permissions <span class="req">*</span></label>' +
@@ -272,11 +272,29 @@ function closeModal(){
 }
 
 /* ===== Save Employee ===== */
-function saveEmployee(){
+/* Create the staff login (Supabase Auth) without disturbing the admin's session */
+async function orbitCreateStaffLogin(email, password){
+  const sb = orbitSB();
+  if(!sb || !email || !password) return { ok: true, skipped: true };
+  try{
+    const cfg = window.ORBIT_SUPABASE_CONFIG || {};
+    const tmp = window.supabase.createClient(cfg.url, cfg.anonKey, {
+      auth: { storageKey: "sb-orbit-admin-tmp", persistSession: false, autoRefreshToken: false }
+    });
+    const { error } = await tmp.auth.signUp({ email: email, password: password });
+    if(error && error.message && error.message.toLowerCase().indexOf("already") === -1 && error.status !== 422){
+      return { ok: false, msg: error.message };
+    }
+    return { ok: true };
+  }catch(err){ return { ok: false, msg: (err && err.message) ? err.message : String(err) }; }
+}
+
+async function saveEmployee(){
   const name = document.getElementById("emp-name").value.trim();
   const surname = document.getElementById("emp-surname").value.trim();
   const initials = document.getElementById("emp-initials").value.trim().toUpperCase() || orbitGenerateInitials(name);
   const email = document.getElementById("emp-email").value.trim().toLowerCase();
+  const password = document.getElementById("emp-password").value;
   const role = document.getElementById("emp-role").value.trim();
   const dept = document.getElementById("emp-dept").value;
   const landing = document.getElementById("emp-landing").value;
@@ -285,6 +303,8 @@ function saveEmployee(){
   // Validation
   if(!name){ orbitToast("Please enter full name", "warning"); document.getElementById("emp-name").focus(); return; }
   if(!email){ orbitToast("Please enter email", "warning"); document.getElementById("emp-email").focus(); return; }
+  if(editingId === null && !password){ orbitToast("Please set a login password for the new staff", "warning"); document.getElementById("emp-password").focus(); return; }
+  if(editingId === null && password.length < 6){ orbitToast("Password must be at least 6 characters", "warning"); document.getElementById("emp-password").focus(); return; }
   if(!role){ orbitToast("Please enter role", "warning"); document.getElementById("emp-role").focus(); return; }
   if(!dept){ orbitToast("Please select department", "warning"); document.getElementById("emp-dept").focus(); return; }
   if(pages.length === 0){ orbitToast("Select at least one page permission", "warning"); return; }
@@ -296,6 +316,14 @@ function saveEmployee(){
     orbitToast("Email already registered", "danger");
     document.getElementById("emp-email").focus();
     return;
+  }
+
+  // create the Supabase Auth login for a new staff member (so they can log in immediately)
+  if(editingId === null && password){
+    const r = await orbitCreateStaffLogin(email, password);
+    if(!r.ok){
+      orbitToast("Login not created: " + r.msg + " — you can still add the profile and create the login later in Supabase Dashboard → Authentication", "warning");
+    }
   }
 
   const empData = {name, surname, initials, email, role, dept, landing, pages};
