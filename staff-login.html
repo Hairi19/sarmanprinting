@@ -31,8 +31,8 @@ body::before{
 
 .login-card{
   width:440px;max-width:100%;
-  background:#fff;border-radius:var(--radius-xl);
-  padding:1.1rem 1.5rem 1rem;
+  background:#fff;border-radius:var(--radius-xl, 16px);
+  padding:1.4rem 1.6rem 1.3rem;
   box-shadow:0 20px 60px rgba(0,0,0,0.35);
   animation:cardIn 0.5s cubic-bezier(.2,.9,.25,1) both;
   position:relative;z-index:1;
@@ -45,8 +45,8 @@ body::before{
 }
 @keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(0.98);}to{opacity:1;transform:translateY(0) scale(1);}}
 
-/* ===== COMPACT HEADER ===== */
-.login-top{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+/* ===== HEADER ===== */
+.login-top{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
 .login-brand{flex-shrink:0;}
 .login-brand .brand-logo-img{height:48px;width:auto;display:block;}
 .login-title-wrap{min-width:0;text-align:left;}
@@ -54,96 +54,99 @@ body::before{
 .login-title-wrap .sub{color:var(--ink-light);font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;font-weight:600;margin-top:1px;}
 .login-title-wrap .tagline{color:var(--brand-red);font-size:11px;font-style:italic;margin:2px 0 0;}
 
-/* ===== RFID SECTION (compact) ===== */
-.rfid-section{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 12px;background:var(--surface-alt);
-  border-radius:var(--radius);border:1.5px solid var(--line);
-  margin-bottom:10px;
+/* ===== FORM ===== */
+.field-group{margin-bottom:14px;}
+.field-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.field-label-row label{font-size:12px;font-weight:600;color:var(--ink);}
+.field-label-row .req{color:var(--brand-red);}
+.link-inline{
+  font-size:11.5px;font-weight:600;color:var(--brand-red);
+  background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;
+  font-family:var(--font-body);
 }
-.rfid-avatar{
-  width:56px;height:56px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg, var(--ink) 0%, var(--ink-2) 100%);
-  color:#fff;display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-heading);font-size:20px;font-weight:700;
-  border:3px solid var(--brand-red);box-shadow:0 3px 12px rgba(192,39,43,0.2);
+.link-inline:hover{color:var(--brand-red-dark);}
+
+.input-shell{
   position:relative;
 }
-.rfid-avatar::after{
-  content:'';position:absolute;inset:-5px;border-radius:50%;
-  border:2px dashed var(--brand-red-soft);opacity:0.5;
-  animation:spin 12s linear infinite;
+.input-shell input{
+  width:100%;box-sizing:border-box;margin-bottom:0;
+  padding:10px 12px;font-size:13.5px;
+  border:1.5px solid var(--line);border-radius:10px;
+  transition:border-color .15s, box-shadow .15s;
+  background:#fff;
 }
-@keyframes spin{to{transform:rotate(360deg);}}
-.rfid-info{flex:1;min-width:0;text-align:left;}
-.rfid-info .name{font-weight:700;font-size:15px;color:var(--ink);line-height:1.2;}
-.rfid-info .role{font-size:11.5px;color:var(--ink-light);margin-top:1px;}
-.rfid-info .dept{
-  display:inline-block;font-size:10px;color:var(--brand-red);
-  background:var(--brand-red-light);padding:2px 8px;border-radius:999px;
-  font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;
+.input-shell input:focus{
+  outline:none;border-color:var(--brand-red);
+  box-shadow:0 0 0 3px var(--brand-red-light, rgba(192,39,43,0.12));
 }
-.rfid-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
-.btn-rfid-switch{
-  padding:6px 12px;font-size:11px;font-weight:600;
-  background:var(--paper-warm);border:1.5px dashed var(--brand-red-soft);
-  color:var(--brand-red-dark);border-radius:999px;cursor:pointer;
-  transition:all 0.15s;font-family:var(--font-body);white-space:nowrap;
+.input-shell input.field-error{border-color:#dc2626;}
+.pw-toggle{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;padding:2px;
+  color:var(--ink-light);display:flex;align-items:center;
 }
-.btn-rfid-switch:hover{background:var(--brand-red-light);}
-.btn-signin-main{
-  padding:8px 16px;font-size:12.5px;font-weight:700;
+.pw-toggle:hover{color:var(--ink);}
+
+.capslock-warning{
+  display:none;align-items:center;gap:5px;margin-top:6px;
+  font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;
+  border-radius:6px;padding:5px 9px;
+}
+.capslock-warning.show{display:flex;}
+
+.remember-row{
+  display:flex;align-items:flex-start;gap:8px;margin-bottom:16px;
+}
+.remember-row input[type="checkbox"]{
+  margin-top:2px;width:15px;height:15px;accent-color:var(--brand-red);flex-shrink:0;
+}
+.remember-row label{font-size:12px;color:var(--ink);line-height:1.4;cursor:pointer;}
+.remember-row .note{display:block;font-size:10px;color:var(--ink-light);margin-top:1px;font-style:italic;}
+
+.alert-banner{
+  display:none;align-items:flex-start;gap:8px;
+  font-size:12px;line-height:1.4;border-radius:8px;
+  padding:9px 11px;margin-bottom:14px;
+}
+.alert-banner.show{display:flex;}
+.alert-banner.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;}
+.alert-banner.deactivated{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;}
+
+.btn-signin{
+  width:100%;padding:11px 16px;font-size:14px;font-weight:700;
   background:var(--brand-red);color:#fff;border:none;
-  border-radius:999px;cursor:pointer;transition:all 0.15s;
-  font-family:var(--font-body);white-space:nowrap;
+  border-radius:999px;cursor:pointer;transition:all .15s;
+  font-family:var(--font-body);
+  display:flex;align-items:center;justify-content:center;gap:8px;
 }
-.btn-signin-main:hover{background:var(--brand-red-dark);transform:translateY(-1px);box-shadow:var(--shadow-red);}
+.btn-signin:hover:not(:disabled){background:var(--brand-red-dark);transform:translateY(-1px);box-shadow:var(--shadow-red, 0 6px 18px rgba(192,39,43,0.3));}
+.btn-signin:disabled{opacity:0.75;cursor:not-allowed;transform:none;}
+.spinner{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;
+  animation:spin .7s linear infinite;display:none;
+}
+.btn-signin.loading .spinner{display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-/* ===== DIVIDER ===== */
-.compact-divider{
-  display:flex;align-items:center;gap:10px;margin:10px 0;
-  color:var(--ink-muted);font-size:10px;text-transform:uppercase;
-  letter-spacing:0.08em;font-weight:600;
+.admin-note{
+  font-size:11px;color:var(--ink-light);background:var(--paper-warm, #fdf6ee);
+  border-radius:8px;padding:9px 11px;border-left:2px solid var(--brand-red);
+  line-height:1.5;margin-top:14px;text-align:center;
 }
-.compact-divider::before,.compact-divider::after{content:'';flex:1;height:1px;background:var(--line);}
-
-/* ===== EMAIL LOGIN FORM (compact) ===== */
-.email-login-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;
-}
-.email-login-grid input{
-  margin-bottom:0;padding:9px 12px;font-size:13px;
-}
-.email-login-grid .full{grid-column:1 / -1;}
-.email-login-bottom{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;
-}
-.btn-email-signin{
-  padding:9px 20px;font-size:13px;font-weight:700;
-  background:var(--ink);color:#fff;border:none;border-radius:999px;
-  cursor:pointer;transition:all 0.15s;font-family:var(--font-body);
-}
-.btn-email-signin:hover{background:var(--ink-2);transform:translateY(-1px);}
-.demo-hint{
-  font-size:10.5px;color:var(--ink-light);background:var(--paper-warm);
-  border-radius:6px;padding:7px 10px;border-left:2px solid var(--brand-red);
-  line-height:1.5;margin-top:6px;
-}
-.demo-hint strong{color:var(--ink-3);}
-.demo-hint .mono{font-family:var(--font-mono);font-size:10px;}
+.admin-note a{color:var(--brand-red);font-weight:600;text-decoration:none;}
+.admin-note a:hover{text-decoration:underline;}
 
 .back-link{
-  display:block;text-align:center;margin-top:8px;
+  display:block;text-align:center;margin-top:12px;
   font-size:11.5px;color:var(--ink-light);text-decoration:none;transition:color 0.15s;
 }
 .back-link:hover{color:var(--brand-red);text-decoration:underline;}
 
 @media (max-width:480px){
-  .login-card{padding:1rem 1.1rem 0.9rem;}
-  .email-login-grid{grid-template-columns:1fr;}
+  .login-card{padding:1.2rem 1.1rem 1rem;}
   .deco-mark{display:none;}
-  .rfid-section{flex-wrap:wrap;}
-  .rfid-actions{flex-direction:row;width:100%;justify-content:flex-end;}
 }
 </style>
 </head>
@@ -166,29 +169,69 @@ body::before{
       </div>
     </div>
 
+    <!-- Error / status banners -->
+    <div id="alert-error" class="alert-banner error" role="alert">
+      <span>&#9888;</span>
+      <span>Invalid email or password. Please try again.</span>
+    </div>
+    <div id="alert-deactivated" class="alert-banner deactivated" role="alert">
+      <span>&#128274;</span>
+      <span>Your account has been deactivated. Contact Admin.</span>
+    </div>
+
     <!-- Staff Email Login Form -->
-    <form onsubmit="event.preventDefault();manualSignIn();">
-      <div class="email-login-grid">
-        <div class="full">
-          <label style="font-size:11px;font-weight:600;margin-bottom:3px;display:block;">Staff Email <span class="req">*</span></label>
-          <input type="email" id="manual-email" placeholder="e.g. you@company.com" style="margin-bottom:0;">
+    <form id="login-form" novalidate onsubmit="event.preventDefault();manualSignIn();">
+
+      <div class="field-group">
+        <div class="field-label-row">
+          <label for="manual-email">Staff Email <span class="req">*</span></label>
         </div>
-        <div>
-          <label style="font-size:11px;font-weight:600;margin-bottom:3px;display:block;">Password <span class="req">*</span></label>
-          <input type="password" id="manual-pass" placeholder="Enter password" style="margin-bottom:0;">
-        </div>
-        <div style="display:flex;align-items:flex-end;">
-          <button type="submit" class="btn-email-signin" style="width:100%;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle;margin-right:4px;">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Sign In
-          </button>
+        <div class="input-shell">
+          <input type="email" id="manual-email" autocomplete="username" placeholder="e.g. you@sarmanprinting.com.my">
         </div>
       </div>
+
+      <div class="field-group">
+        <div class="field-label-row">
+          <label for="manual-pass">Password <span class="req">*</span></label>
+          <button type="button" class="link-inline" id="forgot-pw-btn">Forgot Password?</button>
+        </div>
+        <div class="input-shell">
+          <input type="password" id="manual-pass" autocomplete="current-password" placeholder="Enter password">
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
+            <svg id="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg id="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+              <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.7 19.7 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a19.5 19.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          </button>
+        </div>
+        <div class="capslock-warning" id="capslock-warning">
+          <span>&#9888;</span><span>Caps Lock is on</span>
+        </div>
+      </div>
+
+      <div class="remember-row">
+        <input type="checkbox" id="remember-me">
+        <label for="remember-me">
+          Remember me on this device
+          <span class="note">Do not enable on shared factory floor computers.</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-signin" id="signin-btn">
+        <span class="spinner"></span>
+        <span id="signin-btn-label">Sign In</span>
+      </button>
     </form>
 
-<a href="index.html" class="back-link">&larr; Back to public order tracking</a>
+    <div class="admin-note">
+      Don't have an account? Accounts are created by the Admin/IT department.<br>
+      Contact <a href="mailto:admin@sarmanprinting.com.my">admin@sarmanprinting.com.my</a> for access.
+    </div>
+
+    <a href="index.html" class="back-link">&larr; Back to public order tracking</a>
 
   </div>
 
@@ -199,6 +242,22 @@ body::before{
 /* ===== ORBIT staff login — real Supabase Auth ===== */
 const loginParams = new URLSearchParams(location.search);
 const loginRedirect = loginParams.get("redirect");
+
+/* Map staff role -> default landing page after login.
+   `profile.landing`, when set explicitly in the DB, always wins;
+   this map is only the fallback for roles that don't set one. */
+const ROLE_LANDING_MAP = {
+  boss:            "dashboard.html",
+  admin:           "dashboard.html",
+  production:      "production-floor.html",
+  sales:           "orders.html",
+  rider:           "delivery.html",
+  default:         "dashboard.html"
+};
+
+function landingForRole(role){
+  return ROLE_LANDING_MAP[role] || ROLE_LANDING_MAP.default;
+}
 
 /* If already logged in, go straight to landing page */
 (function(){
@@ -213,38 +272,123 @@ function doRedirect(landing){
   location.href = loginRedirect || landing || "dashboard.html";
 }
 
+/* ---------- UI helpers ---------- */
+const emailEl   = document.getElementById("manual-email");
+const passEl    = document.getElementById("manual-pass");
+const btn       = document.getElementById("signin-btn");
+const btnLabel  = document.getElementById("signin-btn-label");
+const errBanner = document.getElementById("alert-error");
+const deactBanner = document.getElementById("alert-deactivated");
+const capsWarn  = document.getElementById("capslock-warning");
+
+function hideBanners(){
+  errBanner.classList.remove("show");
+  deactBanner.classList.remove("show");
+  emailEl.classList.remove("field-error");
+  passEl.classList.remove("field-error");
+}
+function showError(message){
+  hideBanners();
+  if(message) errBanner.querySelector("span:last-child").textContent = message;
+  errBanner.classList.add("show");
+  emailEl.classList.add("field-error");
+  passEl.classList.add("field-error");
+}
+function showDeactivated(){
+  hideBanners();
+  deactBanner.classList.add("show");
+}
+function setLoading(isLoading){
+  btn.disabled = isLoading;
+  btn.classList.toggle("loading", isLoading);
+  btnLabel.textContent = isLoading ? "Signing in…" : "Sign In";
+}
+
+/* Password visibility toggle */
+document.getElementById("pw-toggle").addEventListener("click", function(){
+  const isHidden = passEl.type === "password";
+  passEl.type = isHidden ? "text" : "password";
+  document.getElementById("eye-open").style.display = isHidden ? "none" : "block";
+  document.getElementById("eye-closed").style.display = isHidden ? "block" : "none";
+  this.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+});
+
+/* Caps Lock detection */
+passEl.addEventListener("keyup", function(e){
+  if(typeof e.getModifierState === "function"){
+    capsWarn.classList.toggle("show", e.getModifierState("CapsLock"));
+  }
+});
+passEl.addEventListener("blur", function(){ capsWarn.classList.remove("show"); });
+
+/* Forgot password — accounts are IT-managed, no self-service reset */
+document.getElementById("forgot-pw-btn").addEventListener("click", function(){
+  (typeof orbitToast === "function")
+    ? orbitToast("Please contact Admin to reset your password.", "warning")
+    : alert("Please contact Admin to reset your password.");
+});
+
+/* Clear banners as soon as the user edits either field again */
+emailEl.addEventListener("input", hideBanners);
+passEl.addEventListener("input", hideBanners);
+
 async function manualSignIn(){
-  const emailEl = document.getElementById("manual-email");
-  const passEl = document.getElementById("manual-pass");
-  const btn = document.querySelector(".btn-email-signin");
   const email = emailEl.value.trim().toLowerCase();
   const pass = passEl.value;
-  if(!email){ orbitToast("Enter staff email", "warning"); return; }
-  if(!pass){ orbitToast("Enter password", "warning"); return; }
+  hideBanners();
+
+  if(!email){ showError("Enter your staff email."); return; }
+  if(!pass){ showError("Enter your password."); return; }
+
   const sb = orbitSB();
   if(!sb){
-    orbitToast("Supabase not configured yet — edit assets/supabase-config.js (see README)", "danger");
+    const msg = "Supabase not configured yet — edit assets/supabase-config.js (see README)";
+    (typeof orbitToast === "function") ? orbitToast(msg, "danger") : alert(msg);
     return;
   }
-  btn.disabled = true; btn.textContent = "Signing in…";
+
+  setLoading(true);
   try {
     const { data, error } = await sb.auth.signInWithPassword({ email: email, password: pass });
+
     if(error || !data || !data.user){
-      orbitToast((error && error.message) ? error.message : "Login failed — check email & password", "danger");
-      btn.disabled = false; btn.textContent = "Sign In";
+      showError("Invalid email or password. Please try again.");
+      setLoading(false);
       return;
     }
+
     /* First-ever user => IT Administrator (full access). Others => default restricted staff profile. */
     const profile = await orbitEnsureProfileForUser(data.user);
-    orbitToast("Welcome, " + (profile && profile.name ? profile.name : email) + "!", "success");
-    setTimeout(function(){ doRedirect(profile && profile.landing ? profile.landing : "dashboard.html"); }, 450);
+
+    /* Deactivated account check — expects profile.active (boolean) from your users table */
+    if(profile && profile.active === false){
+      await sb.auth.signOut();
+      showDeactivated();
+      setLoading(false);
+      return;
+    }
+
+    if(document.getElementById("remember-me").checked){
+      /* Supabase session already persists via localStorage by default;
+         this flag is only for any additional "stay signed in" UX you add later. */
+      try{ localStorage.setItem("orbit_remember", "1"); }catch(e){}
+    }
+
+    if(typeof orbitToast === "function"){
+      orbitToast("Welcome, " + (profile && profile.name ? profile.name : email) + "!", "success");
+    }
+
+    const landing = (profile && profile.landing) ? profile.landing : landingForRole(profile && profile.role);
+    setTimeout(function(){ doRedirect(landing); }, 400);
+
   } catch(err){
-    orbitToast("Login error: " + (err && err.message ? err.message : err), "danger");
-    btn.disabled = false; btn.textContent = "Sign In";
+    showError("Login error: " + (err && err.message ? err.message : err));
+    setLoading(false);
   }
 }
-document.getElementById("manual-pass").addEventListener("keydown", function(e){ if(e.key === "Enter") manualSignIn(); });
-document.getElementById("manual-email").addEventListener("keydown", function(e){ if(e.key === "Enter") document.getElementById("manual-pass").focus(); });
+
+passEl.addEventListener("keydown", function(e){ if(e.key === "Enter") manualSignIn(); });
+emailEl.addEventListener("keydown", function(e){ if(e.key === "Enter") passEl.focus(); });
 </script>
 
 </body>
