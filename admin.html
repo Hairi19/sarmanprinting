@@ -184,7 +184,7 @@ function openAddModal(){
   editingId = null;
   showModal({
     name: "", surname: "", email: "", password: "",
-    role: "", dept: "", landing: "sales.html", pages: ["sales.html"]
+    role: "", dept: "", landing: "", pages: []
   }, "Add New Employee");
 }
 
@@ -194,6 +194,13 @@ function openEditModal(id){
   const emp = orbitGetEmployeeById(id);
   if(!emp) return;
   showModal({...emp}, "Edit Employee — " + emp.name);
+}
+
+/* Auto-tick the page permission that matches the chosen landing page */
+function autoTickLandingPage(slug){
+  if(!slug) return;
+  const cb = document.querySelector('input[name="emp-pages"][value="' + slug + '"]');
+  if(cb) cb.checked = true;
 }
 
 /* ===== Show Modal ===== */
@@ -209,7 +216,7 @@ function showModal(data, title){
     '</label>';
   }).join("");
 
-  const landingOptions = ALL_PAGES.map(p =>
+  const landingOptions = '<option value="">— Select landing page —</option>' + ALL_PAGES.map(p =>
     '<option value="' + p + '"' + (data.landing === p ? ' selected' : '') + '>' + (PAGE_LABELS[p] || p) + '</option>'
   ).join("");
 
@@ -238,7 +245,7 @@ function showModal(data, title){
           '</div>' +
           '<div class="formgrid-2">' +
             '<div><label>Role / Job Title <span class="req">*</span></label><input type="text" id="emp-role" value="' + (data.role || '') + '" placeholder="e.g. Sales Supervisor"></div>' +
-            '<div><label>Landing Page <span class="req">*</span></label><select id="emp-landing">' + landingOptions + '</select></div>' +
+            '<div><label>Landing Page <span class="req">*</span></label><select id="emp-landing" onchange="autoTickLandingPage(this.value)">' + landingOptions + '</select></div>' +
           '</div>' +
           '<div class="formgrid-2">' +
             '<div><label>Email <span class="req">*</span></label><input type="email" id="emp-email" value="' + (data.email || '') + '" placeholder="e.g. ali@company.com"></div>' +
@@ -327,6 +334,7 @@ async function saveEmployee(){
   const dept = document.getElementById("emp-dept").value;
   const landing = document.getElementById("emp-landing").value;
   const pages = Array.from(document.querySelectorAll('input[name="emp-pages"]:checked')).map(cb => cb.value);
+  if(!landing){ empError("Please select a landing page", "emp-landing"); return; }
 
   // Validation
   if(!name){ empError("Please enter full name", "emp-name"); return; }
