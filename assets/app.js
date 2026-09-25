@@ -684,7 +684,7 @@ function orbitRenderTopbar(activeSlug, crumb, uid){
         '</svg>' +
         '<input id="orbit-nav-search" type="text" placeholder="Search job ID or client..." ' +
         'oninput="orbitSetSearch(this.value)" onkeydown="if(event.key===\'Enter\') orbitRunNavSearch()">' +
-        '<button onclick="orbitRunNavSearch()">Search</button>' +
+        '<button onclick="orbitRunNavSearch()" title="Search" style="padding:6px 9px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>' +
       '</div>' +
       '<div class="notif-bell" onclick="orbitToggleNotifications()" title="Notifications">' +
         '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
@@ -695,7 +695,7 @@ function orbitRenderTopbar(activeSlug, crumb, uid){
       '</div>' +
       '<div class="important-toggle" onclick="orbitToggleImportantOnly()" title="Show only urgent jobs">' +
         '<span class="switch" id="orbit-important-switch"><span class="knob"></span></span>' +
-        '<span>Urgent only</span>' +
+        '<span>Urgent</span>' +
       '</div>';
   }
   const crumbEl = document.getElementById("orbit-crumb");
@@ -703,9 +703,14 @@ function orbitRenderTopbar(activeSlug, crumb, uid){
   const chip = document.getElementById("orbit-user-chip");
   if(chip){
     chip.innerHTML =
-      '<div class="avatar">' + (user.initials || "??") + '</div>' +
-      '<div><div class="u-name">' + (user.name || "User") + '</div><div class="u-role">' + (user.role || "") + '</div></div>' +
-      '<button class="btn-signout" onclick="orbitSignOut()">Sign out</button>';
+      '<div class="user-chip-btn" onclick="orbitToggleUserMenu()" title="Account menu">' +
+        '<div class="avatar">' + (user.initials || "??") + '</div>' +
+        '<div class="user-chip-text">' +
+          '<div class="u-name">' + (user.name || "User") + '</div>' +
+          '<div class="u-role">' + (user.role || "") + '</div>' +
+        '</div>' +
+        '<svg class="u-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>';
   }
 }
 
@@ -750,6 +755,54 @@ function orbitToggleNotifications(){
       if(!panel.contains(e.target) && !e.target.closest(".notif-bell")){
         panel.remove();
         document.removeEventListener("click", closeNotif);
+      }
+    });
+  }, 50);
+}
+
+
+/* ============================================================
+   USER ACCOUNT DROPDOWN
+   ============================================================ */
+function orbitToggleUserMenu(){
+  let panel = document.getElementById("orbit-user-menu");
+  if(panel){ panel.remove(); return; }
+  const uid = orbitGetUid();
+  const user = (uid !== null && ORBIT_USERS[uid]) ? ORBIT_USERS[uid] : null;
+  if(!user) return;
+  panel = document.createElement("div");
+  panel.id = "orbit-user-menu";
+  panel.className = "user-menu-panel";
+  panel.innerHTML =
+    '<div class="user-menu-head">' +
+      '<div class="avatar">' + (user.initials || "??") + '</div>' +
+      '<div style="min-width:0;">' +
+        '<div class="um-name">' + (user.name || "User") + (user.surname ? " " + user.surname : "") + '</div>' +
+        '<div class="um-email">' + (user.email || "") + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="um-role-row">' +
+      '<span class="um-role">' + (user.role || "Staff") + '</span>' +
+      '<span class="um-dept">' + (user.dept || "") + '</span>' +
+    '</div>' +
+    '<button class="um-signout" onclick="orbitSignOut()">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+      ' Sign out' +
+    '</button>';
+  document.body.appendChild(panel);
+  setTimeout(() => {
+    const chip = document.getElementById("orbit-user-chip");
+    if(chip){
+      const rect = chip.getBoundingClientRect();
+      panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
+      panel.style.right = (window.innerWidth - rect.right - window.scrollX) + "px";
+    }
+  }, 10);
+  setTimeout(() => {
+    document.addEventListener("click", function closeMenu(e){
+      if(!panel.contains(e.target) && !e.target.closest(".user-chip-btn")){
+        panel.remove();
+        document.removeEventListener("click", closeMenu);
       }
     });
   }, 50);
