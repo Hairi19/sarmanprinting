@@ -112,6 +112,7 @@ function jobBrief(j){
 function jobView(j){
   const dd = j.designData || {};
   const rework = dd.status === "rework" || dd.status === "revision";
+  const submitted = dd.status === "submitted";
   return {
     id: j.id, client: j.client || "—",
     brief: jobBrief(j),
@@ -120,8 +121,8 @@ function jobView(j){
     urgent: j.urgent || "normal",
     salesPerson: j.salesPerson || "—",
     note: dd.note || "Awaiting designer",
-    status: rework ? "rework" : "progress",
-    statusLabel: rework ? "Revision Requested" : "In Progress",
+    status: submitted ? "waiting" : (rework ? "rework" : "progress"),
+    statusLabel: submitted ? "Awaiting Sales Approval" : (rework ? "Revision Requested" : "In Progress"),
     assignedTo: dd.designer || ME,
     jobType: dd.jobType || "New Design",
     dateIn: dd.dateIn || ((j.createdAt || "").split(",")[0] || "—"),

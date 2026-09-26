@@ -394,11 +394,31 @@ function submitDesign(){
     return;
   }
 
+  // ===== SAVE the submission to the job (this was missing!) =====
+  const me = (ORBIT_USERS[orbitGetUid()] && ORBIT_USERS[orbitGetUid()].name) || "Designer";
+  const j = orbitGetJob(sdJob);
+  if(j && sdJob){
+    const dd = Object.assign({}, j.designData || {}, {
+      status: "submitted",
+      designName: designName,
+      clientName: clientName,
+      finishing: finishing,
+      lamination: lamination,
+      colour: colour,
+      diecutFile: diecutFile,
+      finalFile: finalFile,
+      submittedBy: me,
+      submittedAt: orbitNow()
+    });
+    orbitUpdateJob(sdJob, { designData: dd });
+    orbitNotifyDepartments(sdJob, clientName || j.client, 1,
+      sdJob + " artwork submitted by " + me + " — awaiting Sales approval", ["sales.html"]);
+  }
   const jobLabel = sdJob || designName;
   orbitLogAction(jobLabel + ": artwork submitted to Sales (" + finishing + ", " + lamination + ", " + colour + ")", "success");
 
   setTimeout(() => {
-    location.href = "designer.html" + location.search;
+    location.href = "designer-mine.html";
   }, 800);
 }
 
