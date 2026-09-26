@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design · ORBIT</title>
+<title>My Design Jobs · ORBIT</title>
 <link rel="stylesheet" href="assets/style.css">
 <style>
 .design-header-info{
@@ -73,17 +73,8 @@
   <main class="main">
     <div class="page-head">
       <div class="crumb" id="orbit-crumb"></div>
-      <h1>Design Department</h1>
-      <p class="page-desc">Claim jobs from the open pool, work through the design checklist, and submit finished artwork for approval.</p><div style="margin-top:0.75rem;"><a href="designer-mine.html" class="btn btn-primary">My Design Jobs (<span id="mine-count">0</span>) &rarr;</a></div>
-    </div>
-
-    <!-- Job Pool -->
-    <div class="card accent-top">
-      <h2 style="margin-bottom:0.5rem;">Job Pool — Open to Any Designer</h2>
-      <p class="note" style="margin-top:0.5rem;margin-bottom:1.1rem;">
-        Sales left these unassigned, or another designer passed them on. First designer to accept gets it — it then closes for everyone else.
-      </p>
-      <div id="pool-list"></div>
+      <h1>My Design Jobs</h1>
+      <p class="page-desc">Jobs assigned to you — work through the design checklist, then upload &amp; submit finished artwork for approval.</p><div style="margin-top:0.75rem;"><a href="designer.html" class="btn">&larr; Job Pool — Accept New Jobs</a></div>
     </div>
 
     <!-- My Design Jobs -->
@@ -101,7 +92,7 @@
 <script src="assets/supabase-config.js"></script>
 <script src="assets/app.js"></script>
 <script>
-const __uid = orbitRenderShell("designer.html", "Order Intake · Design");
+const __uid = orbitRenderShell("designer.html", "My Design Jobs");
 
 if(__uid !== null){
 
@@ -173,38 +164,7 @@ const CHECKLIST = {
   }
 };
 
-/* ===== Render Job Pool ===== */
-function renderPool(){
-  const poolJobs = getPoolJobs();
-  const el = document.getElementById("pool-list");
-  if(poolJobs.length === 0){
-    el.innerHTML = '<p class="note" style="margin-top:0;">No open jobs right now. Check back later or ask Sales to assign.</p>';
-    return;
-  }
-  el.innerHTML = "";
-  poolJobs.forEach((j, idx) => {
-    const isUrgent = orbitIsUrgent(j.urgent);
-    el.innerHTML +=
-      '<div class="job-card orbit-filterable' + (isUrgent ? ' important' : '') + '" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
-        '<div class="job-card-head">' +
-          '<div>' +
-            '<div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
-            '<div class="job-client">' + j.client + ' &middot; <span class="deadline-tag ' + j.deadlineClass + '">Deadline ' + j.deadline + '</span></div>' +
-          '</div>' +
-          '<span class="badge badge-waiting">Open Pool</span>' +
-        '</div>' +
-        '<p class="note" style="margin-top:0;border:none;background:none;padding:0;">' + j.brief + '</p>' +
-        '<div class="job-client" style="margin-top:6px;font-size:12px;"><strong>Sales:</strong> ' + j.salesPerson + ' &middot; ' + j.note + '</div>' +
-        '<div class="job-actions">' +
-          '<button class="btn btn-primary" onclick="claimJob(\'' + j.id + '\')">' +
-            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M20 6 9 17l-5-5"/></svg>' +
-            'Accept This Job' +
-          '</button>' +
-        '</div>' +
-      '</div>';
-  });
-  orbitApplyFilters();
-}
+
 
 /* ===== Render My Jobs with Complete Checklist ===== */
 function renderMine(){
@@ -352,31 +312,17 @@ function goSubmitDesign(jobId, urgency){
   location.href = "submit-design.html?job=" + encodeURIComponent(jobId) + "&urgent=" + urgency;
 }
 
-function claimJob(jobId){
-  const j = orbitGetJob(jobId);
-  if(!j){ orbitToast("Job not found", "danger"); return; }
-  const today = new Date().toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
-  const dd = Object.assign({}, j.designData || {}, { designer: ME, status: "in-progress", dateIn: today });
-  orbitUpdateJob(jobId, { designData: dd });
-  renderPool();
-  renderMine();
-  orbitLogAction(jobId + " accepted from pool — closed for other designers", "success");
-}
 function passJob(jobId){
   const j = orbitGetJob(jobId);
   if(!j){ orbitToast("Job not found", "danger"); return; }
   const dd = Object.assign({}, j.designData || {}, { designer: "", status: "", note: "Passed back to pool by " + ME });
   orbitUpdateJob(jobId, { designData: dd });
-  renderPool();
   renderMine();
   orbitLogAction(jobId + " passed back to job pool for another designer");
 }
 
 /* ===== Initialize ===== */
-renderPool();
 renderMine();
-  const __mc = document.getElementById('mine-count');
-  if(__mc) __mc.textContent = getMineJobs().length;
 
 } // end auth check
 </script>
