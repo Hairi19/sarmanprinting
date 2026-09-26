@@ -45,6 +45,18 @@
 .urgency-option.urgent:has(input:checked){border-color:var(--urgent);background:var(--urgent-bg);}
 .urgency-option.super-urgent:has(input:checked){border-color:var(--super-urgent);background:var(--super-urgent-bg);}
 </style>
+<style>
+.msdd{position:relative;width:100%;}
+.msdd-toggle{width:100%;text-align:left;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:var(--font-body);}
+.msdd-toggle:hover{border-color:var(--brand-red);}
+.msdd-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+.msdd-label.placeholder{color:var(--ink-light);}
+.msdd-panel{display:none;position:absolute;z-index:40;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.18);padding:10px;max-height:260px;overflow-y:auto;}
+.msdd.open .msdd-panel{display:block;}
+.msdd-panel .checkrow{flex-direction:column;align-items:stretch;gap:2px;flex-wrap:nowrap;}
+.msdd-panel .chk{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;margin:0;}
+.msdd-panel .chk:hover{background:var(--surface-alt);}
+</style>
 </head>
 <body>
 
@@ -148,8 +160,27 @@
                 <option value="sampul">Sampul Raya</option><option value="sticker">Sticker</option>
               </select>
             </div>
-            <div><label>Open Size</label><input type="text" id="f1-open-size" placeholder='e.g. A4, 25" x 35.5"'></div>
-            <div><label>Quantity <span class="req">*</span></label><input type="number" id="f1-quantity" placeholder="e.g. 2000" min="1" required></div>
+            <div><label>Open Size</label>
+              <select id="f1-open-size-select" onchange="orbitPresetChange(this,'f1-open-size','f1-open-size-custom')" style="width:100%;">
+                <option value="">— select size —</option>
+                <option>A6</option><option>A5</option><option>A4</option><option>A3</option><option>A2</option>
+                <option>B5</option><option>B4</option><option>Letter</option><option>Legal</option>
+                <option>210 x 297 mm</option><option>25" x 35.5"</option><option>18" x 25"</option>
+                <option value="custom">Custom… (type below)</option>
+              </select>
+              <input type="text" id="f1-open-size-custom" placeholder="Type custom size, e.g. 12 x 18 inch" style="display:none;margin-top:6px;" oninput="document.getElementById('f1-open-size').value=this.value">
+              <input type="hidden" id="f1-open-size">
+            </div>
+            <div><label>Quantity <span class="req">*</span></label>
+              <select id="f1-quantity-select" onchange="orbitPresetChange(this,'f1-quantity','f1-quantity-custom')" style="width:100%;">
+                <option value="">— select quantity —</option>
+                <option>50</option><option>100</option><option>250</option><option>500</option><option>1000</option>
+                <option>2000</option><option>3000</option><option>5000</option><option>10000</option>
+                <option>20000</option><option>50000</option><option value="custom">Custom… (type below)</option>
+              </select>
+              <input type="number" id="f1-quantity-custom" placeholder="Type custom quantity" min="1" style="display:none;margin-top:6px;" oninput="document.getElementById('f1-quantity').value=this.value">
+              <input type="hidden" id="f1-quantity">
+            </div>
           </div>
 
           <div class="conditional-section" id="sticker-section">
@@ -189,8 +220,30 @@
         <div class="form-section">
           <div class="form-section-title"><span class="form-section-num">4</span>Material &amp; Colour</div>
           <div class="formgrid-3">
-            <div><label>Paper Type</label><input type="text" id="f1-paper-type" placeholder="e.g. Art Card, Art Paper"></div>
-            <div><label>Paper GSM</label><input type="number" id="f1-gsm" placeholder="e.g. 300" min="1"></div>
+            <div><label>Paper Type</label>
+              <select id="f1-paper-type-select" onchange="orbitPresetChange(this,'f1-paper-type','f1-paper-type-custom')" style="width:100%;">
+                <option value="">— select paper type —</option>
+                <option>Art Card</option><option>Art Paper</option><option>Matte Art Paper</option>
+                <option>Gloss Art Paper</option><option>Fancy Paper</option><option>Simili Paper</option>
+                <option>Ivory Card</option><option>Kraft Paper</option><option>NCR Paper</option>
+                <option>Mirror Cote Sticker</option><option>Transparent Sticker</option>
+                <option>PVC</option><option>Synthetic Paper</option>
+                <option value="custom">Custom… (type below)</option>
+              </select>
+              <input type="text" id="f1-paper-type-custom" placeholder="Type custom paper type" style="display:none;margin-top:6px;" oninput="document.getElementById('f1-paper-type').value=this.value">
+              <input type="hidden" id="f1-paper-type">
+            </div>
+            <div><label>Paper GSM</label>
+              <select id="f1-gsm-select" onchange="orbitPresetChange(this,'f1-gsm','f1-gsm-custom')" style="width:100%;">
+                <option value="">— select GSM —</option>
+                <option>60</option><option>80</option><option>90</option><option>100</option><option>120</option>
+                <option>130</option><option>150</option><option>170</option><option>200</option><option>230</option>
+                <option>250</option><option>260</option><option>300</option><option>350</option><option>400</option>
+                <option value="custom">Custom… (type below)</option>
+              </select>
+              <input type="number" id="f1-gsm-custom" placeholder="Type custom GSM" min="1" style="display:none;margin-top:6px;" oninput="document.getElementById('f1-gsm').value=this.value">
+              <input type="hidden" id="f1-gsm">
+            </div>
             <div><label>Print Side</label>
               <div class="radio-group">
                 <label class="radio-option"><input type="radio" name="f1-printside" value="single" checked> Single Side</label>
@@ -286,7 +339,52 @@
     </div>
   </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+/* ===== Preset dropdown helpers (Custom… reveals a type-in box) ===== */
+function orbitPresetChange(sel, hiddenId, customId){
+  const h = document.getElementById(hiddenId);
+  const c = document.getElementById(customId);
+  if(sel.value === "custom"){ c.style.display = "block"; h.value = c.value; c.focus(); }
+  else { c.style.display = "none"; h.value = sel.value; }
+}
+/* ===== Multi-select dropdown wrapper for Finishing / Cutting ===== */
+(function initMultiSelectDropdowns(){
+  ["f1-finishing","f1-cutting"].forEach(function(name){
+    const cb = document.querySelector('input[name="'+name+'"]');
+    if(!cb) return;
+    const row = cb.closest(".checkrow");
+    if(!row || row.closest(".msdd")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "msdd";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "msdd-toggle";
+    btn.innerHTML = '<span class="msdd-label placeholder">Select options (tick multiple)…</span>' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      document.querySelectorAll(".msdd.open").forEach(function(m){ if(m !== wrap) m.classList.remove("open"); });
+      wrap.classList.toggle("open");
+    });
+    row.parentNode.insertBefore(wrap, row);
+    wrap.appendChild(btn);
+    wrap.appendChild(row);
+    function updateLabel(){
+      const checked = Array.from(row.querySelectorAll("input:checked")).map(function(c){ return c.value; });
+      const label = btn.querySelector(".msdd-label");
+      if(checked.length === 0){ label.textContent = "Select options (tick multiple)…"; label.classList.add("placeholder"); }
+      else { label.textContent = checked.length + " selected: " + checked.join(", "); label.classList.remove("placeholder"); }
+    }
+    row.querySelectorAll("input[type=checkbox]").forEach(function(c){ c.addEventListener("change", updateLabel); });
+    updateLabel();
+  });
+  document.addEventListener("click", function(e){
+    if(!e.target.closest(".msdd")){
+      document.querySelectorAll(".msdd.open").forEach(function(m){ m.classList.remove("open"); });
+    }
+  });
+})();
+</script>
 <script src="assets/supabase-config.js"></script>
 <script src="assets/app.js"></script>
 <script>
