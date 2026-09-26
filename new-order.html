@@ -569,7 +569,10 @@ function orbitPresetChange(sel, hiddenId, customId){
     });
     row.parentNode.insertBefore(wrap, row);
     wrap.appendChild(btn);
-    wrap.appendChild(row);
+    const panel = document.createElement("div");
+    panel.className = "msdd-panel";
+    panel.appendChild(row);
+    wrap.appendChild(panel);
     function updateLabel(){
       const checked = Array.from(row.querySelectorAll("input:checked")).map(function(c){ return c.value; });
       const label = btn.querySelector(".msdd-label");
