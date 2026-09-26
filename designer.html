@@ -137,7 +137,11 @@ function jobView(j){
     dateOut: j.deadline || "—"
   };
 }
-function getPoolJobs(){ return orbitGetJobs().filter(function(j){ return j.stage === 1 && !(j.designData && j.designData.designer); }).map(jobView); }
+function getPoolJobs(){ return orbitGetJobs().filter(function(j){
+  const dd = j.designData || {};
+  const assigned = dd.designer && dd.designer !== "Design Pool";
+  return j.stage === 1 && !assigned;
+}).map(jobView); }
 function getMineJobs(){ return orbitGetJobs().filter(function(j){ return j.stage === 1 && j.designData && j.designData.designer === ME; }).map(jobView); }
 /* ===== Checklist Items (Form 2) ===== */
 const CHECKLIST = {

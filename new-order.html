@@ -483,7 +483,7 @@ function submitOrder(){
       cutting: cutting
     },
     designData: {
-      designer: document.getElementById("f1-designer").value || "Design Pool",
+      designer: (document.getElementById("f1-designer").value === "Design Pool") ? "" : document.getElementById("f1-designer").value,
       status: "pending"
     },
     plannerData: {verified: false},
