@@ -339,52 +339,7 @@
     </div>
   </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-/* ===== Preset dropdown helpers (Custom… reveals a type-in box) ===== */
-function orbitPresetChange(sel, hiddenId, customId){
-  const h = document.getElementById(hiddenId);
-  const c = document.getElementById(customId);
-  if(sel.value === "custom"){ c.style.display = "block"; h.value = c.value; c.focus(); }
-  else { c.style.display = "none"; h.value = sel.value; }
-}
-/* ===== Multi-select dropdown wrapper for Finishing / Cutting ===== */
-(function initMultiSelectDropdowns(){
-  ["f1-finishing","f1-cutting"].forEach(function(name){
-    const cb = document.querySelector('input[name="'+name+'"]');
-    if(!cb) return;
-    const row = cb.closest(".checkrow");
-    if(!row || row.closest(".msdd")) return;
-    const wrap = document.createElement("div");
-    wrap.className = "msdd";
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "msdd-toggle";
-    btn.innerHTML = '<span class="msdd-label placeholder">Select options (tick multiple)…</span>' +
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-    btn.addEventListener("click", function(e){
-      e.stopPropagation();
-      document.querySelectorAll(".msdd.open").forEach(function(m){ if(m !== wrap) m.classList.remove("open"); });
-      wrap.classList.toggle("open");
-    });
-    row.parentNode.insertBefore(wrap, row);
-    wrap.appendChild(btn);
-    wrap.appendChild(row);
-    function updateLabel(){
-      const checked = Array.from(row.querySelectorAll("input:checked")).map(function(c){ return c.value; });
-      const label = btn.querySelector(".msdd-label");
-      if(checked.length === 0){ label.textContent = "Select options (tick multiple)…"; label.classList.add("placeholder"); }
-      else { label.textContent = checked.length + " selected: " + checked.join(", "); label.classList.remove("placeholder"); }
-    }
-    row.querySelectorAll("input[type=checkbox]").forEach(function(c){ c.addEventListener("change", updateLabel); });
-    updateLabel();
-  });
-  document.addEventListener("click", function(e){
-    if(!e.target.closest(".msdd")){
-      document.querySelectorAll(".msdd.open").forEach(function(m){ m.classList.remove("open"); });
-    }
-  });
-})();
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/supabase-config.js"></script>
 <script src="assets/app.js"></script>
 <script>
@@ -585,6 +540,51 @@ function showSuccessModal(job){
 }
 
 } // end auth check
+
+/* ===== Preset dropdown helpers (Custom… reveals a type-in box) ===== */
+function orbitPresetChange(sel, hiddenId, customId){
+  const h = document.getElementById(hiddenId);
+  const c = document.getElementById(customId);
+  if(sel.value === "custom"){ c.style.display = "block"; h.value = c.value; c.focus(); }
+  else { c.style.display = "none"; h.value = sel.value; }
+}
+/* ===== Multi-select dropdown wrapper for Finishing / Cutting ===== */
+(function initMultiSelectDropdowns(){
+  ["f1-finishing","f1-cutting"].forEach(function(name){
+    const cb = document.querySelector('input[name="'+name+'"]');
+    if(!cb) return;
+    const row = cb.closest(".checkrow");
+    if(!row || row.closest(".msdd")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "msdd";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "msdd-toggle";
+    btn.innerHTML = '<span class="msdd-label placeholder">Select options (tick multiple)…</span>' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      document.querySelectorAll(".msdd.open").forEach(function(m){ if(m !== wrap) m.classList.remove("open"); });
+      wrap.classList.toggle("open");
+    });
+    row.parentNode.insertBefore(wrap, row);
+    wrap.appendChild(btn);
+    wrap.appendChild(row);
+    function updateLabel(){
+      const checked = Array.from(row.querySelectorAll("input:checked")).map(function(c){ return c.value; });
+      const label = btn.querySelector(".msdd-label");
+      if(checked.length === 0){ label.textContent = "Select options (tick multiple)…"; label.classList.add("placeholder"); }
+      else { label.textContent = checked.length + " selected: " + checked.join(", "); label.classList.remove("placeholder"); }
+    }
+    row.querySelectorAll("input[type=checkbox]").forEach(function(c){ c.addEventListener("change", updateLabel); });
+    updateLabel();
+  });
+  document.addEventListener("click", function(e){
+    if(!e.target.closest(".msdd")){
+      document.querySelectorAll(".msdd.open").forEach(function(m){ m.classList.remove("open"); });
+    }
+  });
+})();
 </script>
 
 </body>
