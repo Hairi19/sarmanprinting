@@ -74,7 +74,7 @@
     <div class="page-head">
       <div class="crumb" id="orbit-crumb"></div>
       <h1>Design Department</h1>
-      <p class="page-desc">Claim jobs from the open pool, work through the design checklist, and submit finished artwork for approval.</p><div style="margin-top:0.75rem;"><a href="designer-mine.html" class="btn btn-primary">My Design Jobs (<span id="mine-count">0</span>) &rarr;</a></div>
+      <p class="page-desc">Claim jobs from the open pool, work through the design checklist, and submit finished artwork for approval.</p><div style="margin-top:0.75rem;"><a href="designer-mine.html" class="btn btn-primary">My Design Jobs &rarr;</a></div>
     </div>
 
     <!-- Job Pool -->
@@ -86,15 +86,6 @@
       <div id="pool-list"></div>
     </div>
 
-    <!-- My Design Jobs -->
-    <div class="card accent-top">
-      <h2 style="margin-bottom:1rem;">My Design Jobs</h2>
-      <div id="mine-list"></div>
-      <p class="note" style="margin-top:1rem;">
-        <strong>Note:</strong> The accept / reject decision on a design belongs to Sales (who liaises with the client), not to Design.
-        Design prepares and resubmits files only.
-      </p>
-    </div>
   </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -359,7 +350,6 @@ function claimJob(jobId){
   const dd = Object.assign({}, j.designData || {}, { designer: ME, status: "in-progress", dateIn: today });
   orbitUpdateJob(jobId, { designData: dd });
   renderPool();
-  renderMine();
   orbitLogAction(jobId + " accepted from pool — closed for other designers", "success");
 }
 function passJob(jobId){
@@ -368,15 +358,11 @@ function passJob(jobId){
   const dd = Object.assign({}, j.designData || {}, { designer: "", status: "", note: "Passed back to pool by " + ME });
   orbitUpdateJob(jobId, { designData: dd });
   renderPool();
-  renderMine();
   orbitLogAction(jobId + " passed back to job pool for another designer");
 }
 
 /* ===== Initialize ===== */
 renderPool();
-renderMine();
-  const __mc = document.getElementById('mine-count');
-  if(__mc) __mc.textContent = getMineJobs().length;
 
 } // end auth check
 </script>
