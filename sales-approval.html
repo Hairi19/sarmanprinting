@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artwork Approval · ORBIT</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left" id="orbit-brand"></div>
+    <div class="pill-nav" id="orbit-nav"></div>
+    <div class="topbar-search" id="orbit-search"></div>
+    <div class="topbar-right">
+      <div class="user-chip" id="orbit-user-chip"></div>
+    </div>
+  </div>
+  <main class="main">
+    <div class="page-head">
+      <div class="crumb" id="orbit-crumb"></div>
+      <h1>Artwork Approval</h1>
+      <p class="page-desc">Design-submitted artwork awaiting your customer sign-off. Approve → sends to Planner. Reject → sends back to Design with a revision note.</p>
+      <div style="margin-top:0.75rem;"><a href="sales.html" class="btn">&larr; Back to Sales Queue</a></div>
+    </div>
+    <div id="approval-list"></div>
+  </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const __uid = orbitRenderShell("sales.html", "Artwork Approval");
+if(__uid !== null){
+
+function awaitingApproval(){
+  return orbitGetJobs().filter(function(j){
+    return j.stage === 1 && j.designData && j.designData.status === "submitted";
+  });
+}
+
+function specLine(j){
+  const sd = j.salesData || {}; const dd = j.designData || {};
+  const parts = [j.product, sd.gsm ? sd.gsm + "gsm " + sd.paperType : sd.paperType, dd.colour || sd.colour, dd.finishing || sd.finishing, dd.lamination].filter(Boolean);
+  return parts.join(" · ") || "—";
+}
+
+function renderApprovals(){
+  const wrap = document.getElementById("approval-list");
+  const jobs = awaitingApproval();
+  if(jobs.length === 0){
+    wrap.innerHTML = '<div class="card"><p class="note" style="margin:0;">No artwork awaiting approval right now. Jobs appear here after Design submits them.</p></div>';
+    return;
+  }
+  wrap.innerHTML = jobs.map(function(j){
+    const dd = j.designData || {}; const sd = j.salesData || {};
+    const fid = j.id.replace(/[^A-Za-z0-9]/g,"");
+    return '<div class="card accent-top orbit-filterable" data-job="'+j.id+'" data-client="'+(j.client||"")+'">' +
+      '<div class="job-card-head">' +
+        '<div><div class="job-id">'+j.id+orbitUrgencyTag(j.urgent||"normal")+'</div>' +
+        '<div class="job-client">'+(j.client||"—")+' · <span class="deadline-tag '+orbitDeadlineStatus(j.deadline)+'">Deadline '+(j.deadline||"—")+'</span></div></div>' +
+        '<span class="badge badge-waiting">Awaiting Approval</span>' +
+      '</div>' +
+      '<div class="design-header-info" style="margin-top:0.75rem;">' +
+        '<div class="formgrid-3">' +
+          '<div><label style="margin-bottom:3px;">Design Name</label><span style="font-weight:600;">'+(dd.designName||"—")+'</span></div>' +
+          '<div><label style="margin-bottom:3px;">Submitted by</label><span style="font-weight:600;">'+(dd.submittedBy||"Design")+'</span></div>' +
+          '<div><label style="margin-bottom:3px;">Quantity</label><span style="font-weight:600;">'+(j.quantity?Number(j.quantity).toLocaleString()+" units":"—")+'</span></div>' +
+        '</div>' +
+        '<div style="margin-top:10px;font-size:13px;"><strong>Specs:</strong> '+specLine(j)+'</div>' +
+        ((dd.diecutFile||dd.finalFile) ? '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> '+(dd.diecutFile||"")+(dd.diecutFile&&dd.finalFile?" · ":"")+(dd.finalFile||"")+'</div>' : '') +
+      '</div>' +
+      '<div style="margin-top:1rem;"><label>Customer Feedback / Revision Note (required if rejecting)</label>' +
+        '<textarea id="fb-'+fid+'" placeholder="Enter customer comments, changes requested, or reasons for rejection..."></textarea></div>' +
+      '<div class="job-actions" style="border-top:none;padding-top:0.5rem;">' +
+        '<button class="btn btn-success btn-lg" onclick="approveJob(\''+j.id+'\')">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approve — Send to Planner</button>' +
+        '<button class="btn btn-danger btn-lg" onclick="rejectJob(\''+j.id+'\',\'fb-'+fid+'\')">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject — Back to Design</button>' +
+      '</div>' +
+    '</div>';
+  }).join("");
+  orbitApplyFilters();
+}
+
+function approveJob(jobId){
+  const j = orbitGetJob(jobId); if(!j){ orbitToast("Job not found","danger"); return; }
+  orbitUpdateJob(jobId, { stage:2, stageName:"Planner", status:"waiting",
+    designData: Object.assign({}, j.designData||{}, {status:"approved"}) });
+  orbitNotifyDepartments(jobId, j.client, 2, jobId+" artwork approved by Sales — awaiting job sheet", ["planner.html"]);
+  orbitLogAction(jobId+" artwork APPROVED — sent to Planner", "success");
+  renderApprovals();
+}
+
+function rejectJob(jobId, fbId){
+  const fb = (document.getElementById(fbId)||{}).value || "";
+  if(!fb.trim()){ orbitToast("Enter a revision note before rejecting","warning"); document.getElementById(fbId).focus(); return; }
+  const j = orbitGetJob(jobId); if(!j){ orbitToast("Job not found","danger"); return; }
+  orbitUpdateJob(jobId, { designData: Object.assign({}, j.designData||{}, {status:"rework", feedback:fb}) });
+  orbitNotifyDepartments(jobId, j.client, 1, jobId+" rejected by Sales — revision: "+fb.substring(0,60), ["designer.html","submit-design.html","designer-mine.html"]);
+  orbitLogAction(jobId+" REJECTED — sent back to Design", "danger");
+  renderApprovals();
+}
+
+renderApprovals();
+setInterval(renderApprovals, 15000);
+}
+</script>
+</body>
+</html>
