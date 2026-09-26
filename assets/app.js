@@ -140,19 +140,29 @@ function orbitSyncPull(){
     sb.from("notifications").select("*").order("id", {ascending:false}).limit(500)
   ]).then(([pRes, jRes, nRes]) => {
     // profiles -> employees
-    if(pRes.data && pRes.data.length >= 0){
-      const emps = (pRes.data || []).map(r => ({
+    if(pRes.data){
+      const remoteEmps = (pRes.data || []).map(r => ({
         id: r.emp_id, uuid: r.user_uuid || null,
         email: r.email, name: r.name, surname: r.surname,
         initials: r.initials, role: r.role, dept: r.dept,
         landing: r.landing, pages: r.pages || ["dashboard.html"],
         active: r.active !== false
       }));
+      // merge: remote as base, local unsynced edits win (never wipe a just-added employee)
+      const byId = {};
+      remoteEmps.forEach(e => { byId[e.id] = e; });
+      try { orbitGetEmployees().forEach(e => { byId[e.id] = e; }); } catch(e){}
+      const emps = Object.values(byId).sort((a,b) => (a.id||0) - (b.id||0));
       localStorage.setItem("orbit_employees", JSON.stringify(emps));
     }
     // jobs
     if(jRes.data){
-      const jobs = (jRes.data || []).map(r => Object.assign({}, r.data, { id: r.job_id }));
+      const remoteJobs = (jRes.data || []).map(r => Object.assign({}, r.data, { id: r.job_id }));
+      // merge: remote as base, local unsynced jobs/updates win (never wipe a just-created order)
+      const byId = {};
+      remoteJobs.forEach(j => { byId[j.id] = j; });
+      try { orbitGetJobs().forEach(j => { byId[j.id] = j; }); } catch(e){}
+      const jobs = Object.values(byId).sort((a,b) => String(a.id).localeCompare(String(b.id)));
       localStorage.setItem("orbit_jobs", JSON.stringify(jobs));
     }
     // notifications (merge, dedupe by id)
