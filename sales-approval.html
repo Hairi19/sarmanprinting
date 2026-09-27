@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Artwork Approval · ORBIT</title>
 <link rel="stylesheet" href="assets/style.css">
-</head>
+<style>.approval-detail{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s ease,opacity .3s ease;margin-top:0;}.card.expanded .approval-detail{max-height:5000px;opacity:1;margin-top:.75rem;}.chev{display:inline-block;transition:transform .3s ease;}.card.expanded .chev{transform:rotate(180deg);}</style></head>
 <body>
   <div class="topbar">
     <div class="topbar-left" id="orbit-brand"></div>
@@ -96,7 +96,12 @@ function specLine(j){
 }
 
 const __open = {};
-function toggleApproval(id){ __open[id] = !__open[id]; renderApprovals(); }
+function toggleApproval(id){
+  const card = document.querySelector('[data-job="'+id+'"]');
+  if(!card) return;
+  card.classList.toggle("expanded");
+  __open[id] = card.classList.contains("expanded");
+}
 
 function renderApprovals(){
   const wrap = document.getElementById("approval-list");
@@ -114,7 +119,7 @@ function renderApprovals(){
     const dd = j.designData || {}; const sd = j.salesData || {};
     const fid = j.id.replace(/[^A-Za-z0-9]/g,"");
     const open = !!__open[j.id];
-    return '<div class="card accent-top orbit-filterable" data-job="'+j.id+'" data-client="'+(j.client||"")+'">' +
+    return '<div class="card accent-top orbit-filterable'+(__open[j.id]?' expanded':'')+'" data-job="'+j.id+'" data-client="'+(j.client||"")+'">' +
       '<div style="cursor:pointer;" onclick="toggleApproval(\''+j.id+'\')">' +
         '<div class="job-card-head">' +
           '<div><div class="job-id">'+j.id+orbitUrgencyTag(j.urgent||"normal")+'</div>' +
@@ -122,11 +127,11 @@ function renderApprovals(){
           '<div style="font-size:12px;color:var(--ink-light);margin-top:4px;">'+(dd.designName||"Design")+' · by '+(dd.submittedBy||"Design")+'</div></div>' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
             '<span class="badge badge-waiting">Awaiting Approval</span>' +
-            '<span style="font-size:18px;color:var(--ink-light);transition:transform .2s;transform:rotate('+(open?180:0)+'deg);">&#9662;</span>' +
+            '<span class="chev" style="font-size:18px;color:var(--ink-light);">&#9662;</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="approval-detail" style="display:'+(open?'block':'none')+';margin-top:0.75rem;">' +
+      '<div class="approval-detail">' +
         '<div class="design-header-info">' +
           '<div class="formgrid-3">' +
             '<div><label style="margin-bottom:3px;">Design Name</label><span style="font-weight:600;">'+(dd.designName||"—")+'</span></div>' +
