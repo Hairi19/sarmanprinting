@@ -37,6 +37,15 @@ function awaitingApproval(){
   });
 }
 
+function fileLink(txt){
+  if(!txt) return "";
+  const t = String(txt).trim();
+  if(/^https?:\/\//i.test(t)){
+    const name = t.split("/").pop().split("?")[0] || t;
+    return '<a href="'+t+'" target="_blank" rel="noopener" style="color:var(--brand-red);text-decoration:underline;">'+name+'</a>';
+  }
+  return '<span style="color:var(--ink);">'+t+'</span>';
+}
 function specLine(j){
   const sd = j.salesData || {}; const dd = j.designData || {};
   const parts = [j.product, sd.gsm ? sd.gsm + "gsm " + sd.paperType : sd.paperType, dd.colour || sd.colour, dd.finishing || sd.finishing, dd.lamination].filter(Boolean);
@@ -66,7 +75,7 @@ function renderApprovals(){
           '<div><label style="margin-bottom:3px;">Quantity</label><span style="font-weight:600;">'+(j.quantity?Number(j.quantity).toLocaleString()+" units":"—")+'</span></div>' +
         '</div>' +
         '<div style="margin-top:10px;font-size:13px;"><strong>Specs:</strong> '+specLine(j)+'</div>' +
-        ((dd.diecutFile||dd.finalFile) ? '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> '+(dd.diecutFile||"")+(dd.diecutFile&&dd.finalFile?" · ":"")+(dd.finalFile||"")+'</div>' : '') +
+        ((dd.diecutFile||dd.finalFile) ? '<div style="margin-top:6px;font-size:12.5px;"><strong>Files (click to view):</strong> '+fileLink(dd.diecutFile)+(dd.diecutFile&&dd.finalFile?' &middot; ':'')+fileLink(dd.finalFile)+'</div>' : '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> (no file link attached — designer pasted only a name)</div>') +
       '</div>' +
       '<div style="margin-top:1rem;"><label>Customer Feedback / Revision Note (required if rejecting)</label>' +
         '<textarea id="fb-'+fid+'" placeholder="Enter customer comments, changes requested, or reasons for rejection..."></textarea></div>' +
