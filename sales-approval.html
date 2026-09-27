@@ -37,14 +37,47 @@ function awaitingApproval(){
   });
 }
 
-function fileLink(txt){
-  if(!txt) return "";
+function normalizeFile(txt){
+  if(!txt) return null;
   const t = String(txt).trim();
+  const m = t.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) || t.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  if(m){
+    const id = m[1];
+    return { name: "Google Drive artwork", view: "https://drive.google.com/uc?export=view&id="+id, download: "https://drive.google.com/uc?export=download&id="+id };
+  }
   if(/^https?:\/\//i.test(t)){
     const name = t.split("/").pop().split("?")[0] || t;
-    return '<a href="'+t+'" target="_blank" rel="noopener" style="color:var(--brand-red);text-decoration:underline;">'+name+'</a>';
+    return { name: name, view: t, download: t };
   }
-  return '<span style="color:var(--ink);">'+t+'</span>';
+  return { name: t, view: null, download: null };
+}
+function shareFile(btn){
+  const url = btn.getAttribute("data-url");
+  if(!url) return;
+  if(navigator.share){ navigator.share({ title:"ORBIT design artwork", text:"Please review this artwork", url:url }).catch(function(){}); }
+  else if(navigator.clipboard){ navigator.clipboard.writeText(url); orbitToast("Link copied — paste it to your customer", "success"); }
+  else { orbitToast("Copy the link from the Save button", "info"); }
+}
+function renderPreviews(dd){
+  const files = [normalizeFile(dd.diecutFile), normalizeFile(dd.finalFile)].filter(Boolean);
+  if(files.length === 0){
+    return '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> none attached — designer did not paste a file link.</div>';
+  }
+  const boxes = files.map(function(f, i){
+    const img = f.view ? '<img src="'+f.view+'" loading="lazy" style="width:100%;height:180px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;" onerror="this.style.display=\'none\';this.parentElement.querySelector(\'.pv-fb\').style.display=\'block\';">' : '';
+    const fb = f.view
+      ? '<div class="pv-fb" style="display:none;padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">Preview blocked — use Save/Share below</div>'
+      : '<div class="pv-fb" style="padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">No preview — only a filename was entered</div>';
+    const save = f.download ? '<a class="btn" style="padding:6px 10px;font-size:12px;flex:1;text-align:center;" href="'+f.download+'" target="_blank" rel="noopener" download>⬇ Save</a>' : '';
+    const share = f.download ? '<button class="btn btn-primary" style="padding:6px 10px;font-size:12px;flex:1;" data-url="'+f.download+'" onclick="shareFile(this)">↗ Share</button>' : '';
+    return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface-alt);">' +
+      img + fb +
+      '<div style="font-size:12px;margin-top:6px;word-break:break-all;color:var(--ink-3);">'+(f.name || "Design "+(i+1))+'</div>' +
+      '<div style="display:flex;gap:6px;margin-top:8px;">'+save+share+'</div></div>';
+  }).join("");
+  return '<div style="margin-top:10px;">' +
+    '<label style="font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-light);">Design Preview — Save or Share with customer</label>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px;">'+boxes+'</div></div>';
 }
 function specLine(j){
   const sd = j.salesData || {}; const dd = j.designData || {};
@@ -75,7 +108,7 @@ function renderApprovals(){
           '<div><label style="margin-bottom:3px;">Quantity</label><span style="font-weight:600;">'+(j.quantity?Number(j.quantity).toLocaleString()+" units":"—")+'</span></div>' +
         '</div>' +
         '<div style="margin-top:10px;font-size:13px;"><strong>Specs:</strong> '+specLine(j)+'</div>' +
-        ((dd.diecutFile||dd.finalFile) ? '<div style="margin-top:6px;font-size:12.5px;"><strong>Files (click to view):</strong> '+fileLink(dd.diecutFile)+(dd.diecutFile&&dd.finalFile?' &middot; ':'')+fileLink(dd.finalFile)+'</div>' : '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> (no file link attached — designer pasted only a name)</div>') +
+        renderPreviews(dd) +
       '</div>' +
       '<div style="margin-top:1rem;"><label>Customer Feedback / Revision Note (required if rejecting)</label>' +
         '<textarea id="fb-'+fid+'" placeholder="Enter customer comments, changes requested, or reasons for rejection..."></textarea></div>' +
