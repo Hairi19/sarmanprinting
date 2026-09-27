@@ -20,7 +20,7 @@
       <div class="crumb" id="orbit-crumb"></div>
       <h1>Artwork Approval</h1>
       <p class="page-desc">Design-submitted artwork awaiting your customer sign-off. Approve → sends to Planner. Reject → sends back to Design with a revision note.</p>
-      <div style="margin-top:0.75rem;"><div style="margin-bottom:1.5rem;"><a href="sales.html" class="btn">&larr; Back to Sales Queue</a></div></div>
+      <div style="margin-top:0.75rem;"><div style="margin-bottom:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;"><a href="sales.html" class="btn">&larr; Back to Sales Queue</a><input type="text" id="approval-search" placeholder="Search job ID or customer name…" oninput="renderApprovals()" style="flex:1;min-width:220px;max-width:380px;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;"></div></div>
     </div>
     <div id="approval-list"></div>
   </main>
@@ -95,11 +95,16 @@ function specLine(j){
   return parts.join(" · ") || "—";
 }
 
+const __open = {};
+function toggleApproval(id){ __open[id] = !__open[id]; renderApprovals(); }
+
 function renderApprovals(){
   const wrap = document.getElementById("approval-list");
-  const jobs = awaitingApproval();
+  const q = ((document.getElementById("approval-search")||{}).value || "").trim().toLowerCase();
+  let jobs = awaitingApproval();
+  if(q){ jobs = jobs.filter(function(j){ return (j.id||"").toLowerCase().indexOf(q) !== -1 || ((j.client||"").toLowerCase().indexOf(q) !== -1); }); }
   if(jobs.length === 0){
-    wrap.innerHTML = '<div class="card"><p class="note" style="margin:0;">No artwork awaiting approval right now. Jobs appear here after Design submits them.</p></div>';
+    wrap.innerHTML = '<div class="card"><p class="note" style="margin:0;">' + (q ? "No jobs match your search." : "No artwork awaiting approval right now. Jobs appear here after Design submits them.") + '</p></div>';
     return;
   }
   // preserve any feedback the user is mid-typing before re-render
@@ -108,28 +113,37 @@ function renderApprovals(){
   wrap.innerHTML = jobs.map(function(j){
     const dd = j.designData || {}; const sd = j.salesData || {};
     const fid = j.id.replace(/[^A-Za-z0-9]/g,"");
+    const open = !!__open[j.id];
     return '<div class="card accent-top orbit-filterable" data-job="'+j.id+'" data-client="'+(j.client||"")+'">' +
-      '<div class="job-card-head">' +
-        '<div><div class="job-id">'+j.id+orbitUrgencyTag(j.urgent||"normal")+'</div>' +
-        '<div class="job-client">'+(j.client||"—")+' · <span class="deadline-tag '+orbitDeadlineStatus(j.deadline)+'">Deadline '+(j.deadline||"—")+'</span></div></div>' +
-        '<span class="badge badge-waiting">Awaiting Approval</span>' +
-      '</div>' +
-      '<div class="design-header-info" style="margin-top:0.75rem;">' +
-        '<div class="formgrid-3">' +
-          '<div><label style="margin-bottom:3px;">Design Name</label><span style="font-weight:600;">'+(dd.designName||"—")+'</span></div>' +
-          '<div><label style="margin-bottom:3px;">Submitted by</label><span style="font-weight:600;">'+(dd.submittedBy||"Design")+'</span></div>' +
-          '<div><label style="margin-bottom:3px;">Quantity</label><span style="font-weight:600;">'+(j.quantity?Number(j.quantity).toLocaleString()+" units":"—")+'</span></div>' +
+      '<div style="cursor:pointer;" onclick="toggleApproval(\''+j.id+'\')">' +
+        '<div class="job-card-head">' +
+          '<div><div class="job-id">'+j.id+orbitUrgencyTag(j.urgent||"normal")+'</div>' +
+          '<div class="job-client">'+(j.client||"—")+' · <span class="deadline-tag '+orbitDeadlineStatus(j.deadline)+'">Deadline '+(j.deadline||"—")+'</span></div>' +
+          '<div style="font-size:12px;color:var(--ink-light);margin-top:4px;">'+(dd.designName||"Design")+' · by '+(dd.submittedBy||"Design")+'</div></div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span class="badge badge-waiting">Awaiting Approval</span>' +
+            '<span style="font-size:18px;color:var(--ink-light);transition:transform .2s;transform:rotate('+(open?180:0)+'deg);">&#9662;</span>' +
+          '</div>' +
         '</div>' +
-        '<div style="margin-top:10px;font-size:13px;"><strong>Specs:</strong> '+specLine(j)+'</div>' +
-        renderPreviews(dd) +
       '</div>' +
-      '<div style="margin-top:1rem;"><label>Customer Feedback / Revision Note (required if rejecting)</label>' +
-        '<textarea id="fb-'+fid+'" placeholder="Enter customer comments, changes requested, or reasons for rejection..."></textarea></div>' +
-      '<div class="job-actions" style="border-top:none;padding-top:0.5rem;">' +
-        '<button class="btn btn-success btn-lg" onclick="approveJob(\''+j.id+'\')">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approve — Send to Planner</button>' +
-        '<button class="btn btn-danger btn-lg" onclick="rejectJob(\''+j.id+'\',\'fb-'+fid+'\')">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject — Back to Design</button>' +
+      '<div class="approval-detail" style="display:'+(open?'block':'none')+';margin-top:0.75rem;">' +
+        '<div class="design-header-info">' +
+          '<div class="formgrid-3">' +
+            '<div><label style="margin-bottom:3px;">Design Name</label><span style="font-weight:600;">'+(dd.designName||"—")+'</span></div>' +
+            '<div><label style="margin-bottom:3px;">Submitted by</label><span style="font-weight:600;">'+(dd.submittedBy||"Design")+'</span></div>' +
+            '<div><label style="margin-bottom:3px;">Quantity</label><span style="font-weight:600;">'+(j.quantity?Number(j.quantity).toLocaleString()+" units":"—")+'</span></div>' +
+          '</div>' +
+          '<div style="margin-top:10px;font-size:13px;"><strong>Specs:</strong> '+specLine(j)+'</div>' +
+        '</div>' +
+        renderPreviews(dd) +
+        '<div style="margin-top:1rem;"><label>Customer Feedback / Revision Note (required if rejecting)</label>' +
+          '<textarea id="fb-'+fid+'" placeholder="Enter customer comments, changes requested, or reasons for rejection..."></textarea></div>' +
+        '<div class="job-actions" style="border-top:none;padding-top:0.5rem;">' +
+          '<button class="btn btn-success btn-lg" onclick="approveJob(\''+j.id+'\')">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approve — Send to Planner</button>' +
+          '<button class="btn btn-danger btn-lg" onclick="rejectJob(\''+j.id+'\',\'fb-'+fid+'\')">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Reject — Back to Design</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join("");
