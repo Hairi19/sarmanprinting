@@ -20,7 +20,7 @@
       <div class="crumb" id="orbit-crumb"></div>
       <h1>Artwork Approval</h1>
       <p class="page-desc">Design-submitted artwork awaiting your customer sign-off. Approve → sends to Planner. Reject → sends back to Design with a revision note.</p>
-      <div style="margin-top:0.75rem;"><a href="sales.html" class="btn">&larr; Back to Sales Queue</a></div>
+      <div style="margin-top:0.75rem;"><div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;"><a href="sales.html" class="btn">&larr; Back to Sales Queue</a><button class="btn btn-primary" onclick="renderApprovals()">&#x27f3; Refresh list</button></div></div>
     </div>
     <div id="approval-list"></div>
   </main>
@@ -102,6 +102,9 @@ function renderApprovals(){
     wrap.innerHTML = '<div class="card"><p class="note" style="margin:0;">No artwork awaiting approval right now. Jobs appear here after Design submits them.</p></div>';
     return;
   }
+  // preserve any feedback the user is mid-typing before re-render
+  const __savedFB = {};
+  wrap.querySelectorAll('textarea').forEach(function(t){ if(t.id) __savedFB[t.id]=t.value; });
   wrap.innerHTML = jobs.map(function(j){
     const dd = j.designData || {}; const sd = j.salesData || {};
     const fid = j.id.replace(/[^A-Za-z0-9]/g,"");
@@ -130,6 +133,7 @@ function renderApprovals(){
       '</div>' +
     '</div>';
   }).join("");
+  Object.keys(__savedFB).forEach(function(id){ const el = document.getElementById(id); if(el) el.value = __savedFB[id]; });
   orbitApplyFilters();
 }
 
@@ -153,7 +157,6 @@ function rejectJob(jobId, fbId){
 }
 
 renderApprovals();
-setInterval(renderApprovals, 15000);
 }
 </script>
 </body>
