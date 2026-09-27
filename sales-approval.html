@@ -64,14 +64,24 @@ function renderPreviews(dd){
     return '<div style="margin-top:6px;font-size:12.5px;color:var(--ink-light);"><strong>Files:</strong> none attached — designer did not paste a file link.</div>';
   }
   const boxes = files.map(function(f, i){
-    const img = f.view ? '<img src="'+f.view+'" loading="lazy" style="width:100%;height:180px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;" onerror="this.style.display=\'none\';this.parentElement.querySelector(\'.pv-fb\').style.display=\'block\';">' : '';
-    const fb = f.view
-      ? '<div class="pv-fb" style="display:none;padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">Preview blocked — use Save/Share below</div>'
-      : '<div class="pv-fb" style="padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">No preview — only a filename was entered</div>';
+    const ext = (f.name||"").split(".").pop().toLowerCase();
+    let preview = '';
+    if(f.view){
+      if(ext === "pdf"){
+        preview = '<iframe src="'+f.view+'" loading="lazy" style="width:100%;height:180px;border:1px solid var(--line);border-radius:8px;background:#fff;"></iframe>';
+      } else if(ext === "ai" || ext === "eps" || ext === "zip"){
+        preview = '<div class="pv-fb" style="padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">No inline preview — use Save/Share below</div>';
+      } else {
+        preview = '<img src="'+f.view+'" loading="lazy" style="width:100%;height:180px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;" onerror="this.style.display=\'none\';this.parentElement.querySelector(\'.pv-fb\').style.display=\'block\';">' +
+          '<div class="pv-fb" style="display:none;padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">Preview blocked — use Save/Share below</div>';
+      }
+    } else {
+      preview = '<div class="pv-fb" style="padding:24px 10px;text-align:center;color:var(--ink-light);font-size:12px;">No preview — only a filename was entered</div>';
+    }
     const save = f.download ? '<a class="btn" style="padding:6px 10px;font-size:12px;flex:1;text-align:center;" href="'+f.download+'" target="_blank" rel="noopener" download>⬇ Save</a>' : '';
     const share = f.download ? '<button class="btn btn-primary" style="padding:6px 10px;font-size:12px;flex:1;" data-url="'+f.download+'" onclick="shareFile(this)">↗ Share</button>' : '';
     return '<div style="border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface-alt);">' +
-      img + fb +
+      preview +
       '<div style="font-size:12px;margin-top:6px;word-break:break-all;color:var(--ink-3);">'+(f.name || "Design "+(i+1))+'</div>' +
       '<div style="display:flex;gap:6px;margin-top:8px;">'+save+share+'</div></div>';
   }).join("");

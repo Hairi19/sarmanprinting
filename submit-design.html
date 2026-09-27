@@ -360,7 +360,7 @@ function updateFileSummary(){
 updateSummary();
 
 /* ===== Submit ===== */
-function submitDesign(){
+async function submitDesign(){
   const designName = document.getElementById("sd-design-name").value.trim();
   const clientName = document.getElementById("sd-client-name").value.trim();
   const finishing = document.getElementById("sd-finishing").value;
@@ -384,8 +384,8 @@ function submitDesign(){
   }
 
   // Check for at least one file reference
-  const diecutFile = document.getElementById("sd-diecut-file").value.trim();
-  const finalFile = document.getElementById("sd-final-file").value.trim();
+  let diecutFile = document.getElementById("sd-diecut-file").value.trim();
+  let finalFile = document.getElementById("sd-final-file").value.trim();
   const diecutUploaded = document.getElementById("diecut-file").files.length > 0;
   const designUploaded = document.getElementById("design-file").files.length > 0;
 
@@ -394,6 +394,26 @@ function submitDesign(){
     return;
   }
 
+  // ===== UPLOAD real files to Supabase Storage (override text links if a file was picked) =====
+  const __btn = document.querySelector('button[onclick="submitDesign()"]');
+  if(__btn){ __btn.disabled = true; __btn.textContent = "Uploading files…"; }
+  try {
+    const __sb = orbitSB();
+    if(__sb && __sb.storage){
+      const __dc = document.getElementById("diecut-file").files[0];
+      if(__dc){
+        const __p = sdJob + "/diecut-" + Date.now() + "-" + __dc.name;
+        await __sb.storage.from("design-files").upload(__p, __dc);
+        diecutFile = __sb.storage.from("design-files").getPublicUrl(__p).data.publicUrl;
+      }
+      const __df = document.getElementById("design-file").files[0];
+      if(__df){
+        const __p = sdJob + "/design-" + Date.now() + "-" + __df.name;
+        await __sb.storage.from("design-files").upload(__p, __df);
+        finalFile = __sb.storage.from("design-files").getPublicUrl(__p).data.publicUrl;
+      }
+    }
+  } catch(__e){ console.warn("upload failed:", __e); orbitToast("File upload failed — saved text links instead", "warning"); }
   // ===== SAVE the submission to the job (this was missing!) =====
   const me = (ORBIT_USERS[orbitGetUid()] && ORBIT_USERS[orbitGetUid()].name) || "Designer";
   const j = orbitGetJob(sdJob);
