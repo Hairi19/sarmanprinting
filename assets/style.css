@@ -1439,6 +1439,12 @@ fieldset.orbit-fieldset legend{
   overflow:hidden;
   display:flex;
   flex-direction:column;
+  transform-origin:top right;
+  animation:notifIn .18s ease-out;
+}
+@keyframes notifIn{
+  from{opacity:0;transform:translateY(-6px) scale(.97);}
+  to{opacity:1;transform:translateY(0) scale(1);}
 }
 .notif-panel-header{
   display:flex;

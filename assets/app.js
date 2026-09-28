@@ -752,14 +752,12 @@ function orbitToggleNotifications(){
   html += '</div>';
   panel.innerHTML = html;
   document.body.appendChild(panel);
-  setTimeout(() => {
-    const bell = document.querySelector(".notif-bell");
-    if(bell){
-      const rect = bell.getBoundingClientRect();
-      panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
-      panel.style.right = (window.innerWidth - rect.right - window.scrollX) + "px";
-    }
-  }, 10);
+  const bell = document.querySelector(".notif-bell");
+  if(bell){
+    const rect = bell.getBoundingClientRect();
+    panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
+    panel.style.right = (window.innerWidth - rect.right - window.scrollX) + "px";
+  }
   setTimeout(() => {
     document.addEventListener("click", function closeNotif(e){
       if(!panel.contains(e.target) && !e.target.closest(".notif-bell")){
