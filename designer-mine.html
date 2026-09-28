@@ -232,6 +232,9 @@ function renderMine(){
 
         // ===== FORM 2: Graphic Design Checklist =====
         '<div style="margin-top:0.5rem;">' +
+          '<div style="text-align:right;margin-bottom:0.6rem;">' +
+            '<button type="button" class="btn" style="padding:5px 12px;font-size:12px;" onclick="markAllChecklist(\'' + safeId + '\')">✓ Mark entire checklist complete</button>' +
+          '</div>' +
 
           // Section: When Receive Job
           '<h4 style="margin:1rem 0 0.75rem;color:var(--brand-red);">When Receive Job</h4>' +
@@ -297,6 +300,20 @@ function renderMine(){
   orbitApplyFilters();
 }
 
+function markAllChecklist(safeId){
+  document.querySelectorAll('input[id^="'+safeId+'-"]').forEach(function(cb){
+    cb.checked = true;
+    updateChecklistProgress(cb.closest('.checklist-section'));
+  });
+  orbitToast('Checklist marked complete', 'success');
+}
+function markSection(prefix){
+  document.querySelectorAll('input[id^="'+prefix+'-"]').forEach(function(cb){
+    cb.checked = true;
+    updateChecklistProgress(cb.closest('.checklist-section'));
+  });
+}
+
 function renderChecklistGroup(safeId, groupKey, group){
   const items = group.items.map((item, i) =>
     '<label class="chk"><input type="checkbox" id="' + safeId + '-' + groupKey + '-' + i + '"> ' + item + '</label>'
@@ -306,7 +323,7 @@ function renderChecklistGroup(safeId, groupKey, group){
 
   return '<div class="checklist-section" id="' + safeId + '-' + groupKey + '-section">' +
     '<fieldset class="orbit-fieldset">' +
-      '<legend>' + group.title + '</legend>' +
+      '<legend style="display:flex;align-items:center;gap:8px;">' + group.title + '<a href="#" style="font-size:11px;color:var(--brand-red);text-decoration:underline;" onclick="event.preventDefault();markSection(\'' + safeId + '-' + groupKey + '\')">tick all</a></legend>' +
       sub +
       '<div class="checkrow">' + items + '</div>' +
       '<div class="checklist-progress" id="' + safeId + '-' + groupKey + '-progress">0 of ' + group.items.length + ' completed</div>' +
