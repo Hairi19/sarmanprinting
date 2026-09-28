@@ -57,6 +57,10 @@
   font-size:12px;
   color:var(--ink-3);
 }
+.mine-detail{max-height:0;overflow:hidden;opacity:0;transition:max-height .4s ease,opacity .3s ease;}
+.job-card.expanded .mine-detail{max-height:8000px;opacity:1;}
+.chev{display:inline-block;transition:transform .3s ease;}
+.job-card.expanded .chev{transform:rotate(180deg);}
 </style>
 <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
@@ -168,6 +172,14 @@ const CHECKLIST = {
 
 
 
+const __mineOpen = {};
+function toggleMine(id){
+  const card = document.querySelector('[data-job="'+id+'"]');
+  if(!card) return;
+  card.classList.toggle('expanded');
+  __mineOpen[id] = card.classList.contains('expanded');
+}
+
 /* ===== Render My Jobs with Complete Checklist ===== */
 function renderMine(){
   const mineJobs = getMineJobs();
@@ -184,18 +196,20 @@ function renderMine(){
     const urgencyClass = j.urgent === "super-urgent" ? " super-urgent" : (isUrgent ? " important" : "");
 
     el.innerHTML +=
-      '<div class="job-card orbit-filterable' + urgencyClass + '" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
+      '<div class="job-card orbit-filterable' + urgencyClass + (__mineOpen[j.id]?' expanded':'') + '" data-job="' + j.id + '" data-client="' + j.client + '" data-important="' + isUrgent + '">' +
 
         // Job Header
-        '<div class="job-card-head">' +
+        '<div class="job-card-head" style="cursor:pointer;" onclick="toggleMine(\'' + j.id + '\')">' +
           '<div>' +
             '<div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
             '<div class="job-client">' + j.client + ' &middot; <span class="deadline-tag ' + j.deadlineClass + '">Deadline ' + j.deadline + '</span></div>' +
           '</div>' +
           '<span class="badge badge-' + j.status + '">' + j.statusLabel + '</span>' +
+          '<span class="chev" style="font-size:16px;color:var(--ink-light);margin-left:8px;">&#9662;</span>' +
         '</div>' +
 
         // Form 2 Header Info
+        '<div class="mine-detail">' +
         '<div class="design-header-info">' +
           '<div class="formgrid-4">' +
             '<div><label style="margin-bottom:3px;">Urgency</label><span style="font-weight:600;color:' + (isUrgent ? 'var(--urgent)' : 'var(--ink-3)') + ';">' + j.urgent.charAt(0).toUpperCase() + j.urgent.slice(1) + '</span></div>' +
@@ -265,6 +279,7 @@ function renderMine(){
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>' +
             'Pass to Another Designer' +
           '</button>' +
+        '</div>' +
         '</div>' +
 
       '</div>';
