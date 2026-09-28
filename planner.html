@@ -199,7 +199,7 @@ var chevronSVG = '<svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stro
 function renderPlannerList(){
   var el = document.getElementById("planner-list");
   var jobs = orbitGetJobs().filter(function(j){
-    return j.stage === 2 || (j.stage <= 2 && !j.plannerData || !j.plannerData.verified);
+    return j.stage === 2;  // only jobs approved by Sales (stage 2 = Planner)
   });
 
   if(jobs.length === 0){
