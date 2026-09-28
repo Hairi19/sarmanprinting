@@ -204,8 +204,10 @@ function renderMine(){
             '<div class="job-id">' + j.id + orbitUrgencyTag(j.urgent) + '</div>' +
             '<div class="job-client">' + j.client + ' &middot; <span class="deadline-tag ' + j.deadlineClass + '">Deadline ' + j.deadline + '</span></div>' +
           '</div>' +
-          '<span class="badge badge-' + j.status + '">' + j.statusLabel + '</span>' +
-          '<span class="chev" style="font-size:16px;color:var(--ink-light);margin-left:8px;">&#9662;</span>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span class="badge badge-' + j.status + '">' + j.statusLabel + '</span>' +
+            '<span class="chev" style="font-size:16px;color:var(--ink-light);">&#9662;</span>' +
+          '</div>' +
         '</div>' +
 
         // Form 2 Header Info
