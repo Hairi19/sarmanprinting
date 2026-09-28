@@ -798,14 +798,12 @@ function orbitToggleUserMenu(){
       ' Sign out' +
     '</button>';
   document.body.appendChild(panel);
-  setTimeout(() => {
-    const chip = document.getElementById("orbit-user-chip");
-    if(chip){
-      const rect = chip.getBoundingClientRect();
-      panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
-      panel.style.right = (window.innerWidth - rect.right - window.scrollX) + "px";
-    }
-  }, 10);
+  const chip = document.getElementById("orbit-user-chip");
+  if(chip){
+    const rect = chip.getBoundingClientRect();
+    panel.style.top = (rect.bottom + window.scrollY + 8) + "px";
+    panel.style.right = (window.innerWidth - rect.right - window.scrollX) + "px";
+  }
   setTimeout(() => {
     document.addEventListener("click", function closeMenu(e){
       if(!panel.contains(e.target) && !e.target.closest(".user-chip-btn")){
