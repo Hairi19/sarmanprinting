@@ -200,7 +200,7 @@ function approveArtwork(){
   orbitLogAction(j.id + " artwork APPROVED — sent to Planner for job sheet", "success");
   document.getElementById("approval-feedback").value = "";
   renderOrdersTable();
-  (function(){ const pc = document.getElementById('pending-count'); if(!pc) return; const n = orbitGetJobs().filter(function(j){ return j.stage===1 && j.designData && j.designData.status==='submitted'; }).length; if(n>0){ pc.textContent = n; pc.style.display='inline-flex'; } else { pc.style.display='none'; } })();
+  (function(){ const pc = document.getElementById('pending-count'); if(!pc) return; const n = orbitGetJobs().filter(function(j){ return j.designData && j.designData.status==='submitted'; }).length; if(n>0){ pc.textContent = n; pc.style.display='inline-flex'; } else { pc.style.display='none'; } })();
 }
 function rejectArtwork(){
   const j = selectedApprovalJob();

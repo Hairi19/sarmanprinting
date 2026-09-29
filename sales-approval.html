@@ -33,8 +33,9 @@ const __uid = orbitRenderShell("sales.html", "Artwork Approval");
 if(__uid !== null){
 
 function awaitingApproval(){
+  // driven by status (submitted = awaiting approval), not stage — survives any stage mismatch
   return orbitGetJobs().filter(function(j){
-    return j.stage === 1 && j.designData && j.designData.status === "submitted";
+    return j.designData && j.designData.status === "submitted";
   });
 }
 
