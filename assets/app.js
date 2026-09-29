@@ -125,12 +125,16 @@ function orbitSyncPushNotifications(){
 // Returns a promise. On first-ever load (cache empty, remote has data)
 // it reloads the page once so everything renders with real data.
 let orbitSyncPullRunning = false;
+let orbitSyncPullPromise = null;
 function orbitSyncPull(){
   const sb = orbitSB();
-  if(!sb || orbitSyncPullRunning) return Promise.resolve();
+  if(!sb) return Promise.resolve();
+  // If a pull is already running (e.g. the automatic one at page load), wait for THAT one
+  // instead of returning instantly — otherwise callers render before the data has arrived.
+  if(orbitSyncPullRunning && orbitSyncPullPromise) return orbitSyncPullPromise;
   orbitSyncPullRunning = true;
   const localEmpty = !localStorage.getItem("orbit_jobs") && !localStorage.getItem("orbit_employees");
-  return Promise.all([
+  orbitSyncPullPromise = Promise.all([
     sb.from("profiles").select("*").order("emp_id", {ascending:true}),
     sb.from("jobs").select("*").order("created_at", {ascending:false}),
     sb.from("notifications").select("*").order("id", {ascending:false}).limit(500)
@@ -178,6 +182,7 @@ function orbitSyncPull(){
     }
   }).catch(err => console.warn("[ORBIT] sync pull error:", err))
     .then(() => { orbitSyncPullRunning = false; });
+  return orbitSyncPullPromise;
 }
 function orbitPullOnce(){ return orbitSyncPull(); }
 
