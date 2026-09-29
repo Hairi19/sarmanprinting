@@ -76,17 +76,6 @@ body{
   position:relative;
 }
 
-/* Subtle paper texture background */
-body::before{
-  content:'';
-  position:fixed;
-  inset:0;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(28,27,26,0.025) 1px, transparent 0);
-  background-size:24px 24px;
-  pointer-events:none;
-  z-index:0;
-}
 
 .mono{font-family:var(--font-mono);}
 h1,h2,h3,h4{
@@ -117,20 +106,6 @@ a:hover{text-decoration:underline;}
   z-index:20;
   box-shadow:var(--shadow-lg);
   border-bottom:3px solid var(--ink);
-}
-.topbar::before{
-  content:'';
-  position:absolute;
-  bottom:-3px;
-  left:0;
-  right:0;
-  height:3px;
-  background:repeating-linear-gradient(
-    90deg,
-    var(--ink) 0px, var(--ink) 8px,
-    transparent 8px, transparent 16px
-  );
-  opacity:0.15;
 }
 .topbar-left{display:flex;align-items:center;gap:14px;min-width:0;}
 .topbar-brand{display:flex;align-items:center;gap:12px;}
