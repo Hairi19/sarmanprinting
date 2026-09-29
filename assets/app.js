@@ -95,26 +95,60 @@ function orbitSyncPushProfiles(){
   }).catch(err => console.warn("[ORBIT] profiles push error:", err));
 }
 
+function orbitPushedMap(){ try{ return JSON.parse(localStorage.getItem("orbit_pushed_jobs") || "{}"); }catch(e){ return {}; } }
+function orbitSetPushedMap(m){ try{ localStorage.setItem("orbit_pushed_jobs", JSON.stringify(m)); }catch(e){} }
+// is job a newer than job b? (timestamp first, then more production history)
+function orbitJobIsNewer(x, y){
+  const tx = x._updatedAt || 0, ty = y._updatedAt || 0;
+  if(tx !== ty) return tx > ty;
+  return (x.productionHistory || []).length > (y.productionHistory || []).length;
+}
 function orbitSyncPushJobs(){
   const sb = orbitSB(); if(!sb) return Promise.resolve();
-  const jobs = orbitGetJobs();
-  const rows = jobs.map(j => ({
-    job_id:     j.id,
-    client:     j.client || null,
-    stage:      typeof j.stage === "number" ? j.stage : 0,
-    status:     j.status || "waiting",
-    urgent:     j.urgent || "normal",
-    created_at: j.createdAt || null,
-    data:       j
-  }));
-  return sb.from("jobs").upsert(rows, {onConflict:"job_id"}).then(({error}) => {
-    if(error) console.warn("[ORBIT] jobs push failed:", error.message);
-  }).catch(err => console.warn("[ORBIT] jobs push error:", err));
+  const pushed = orbitPushedMap();
+  // only send jobs that changed on THIS device — never re-send an old cached copy over a newer remote one
+  const changed = orbitGetJobs().filter(j => j && j.id && pushed[j.id] !== (j._updatedAt || 0));
+  if(!changed.length) return Promise.resolve();
+  const markDone = list => { const m = orbitPushedMap(); list.forEach(j => { m[j.id] = j._updatedAt || 0; }); orbitSetPushedMap(m); };
+
+  if(orbitGetSessionUser()){
+    // logged-in staff: full upsert
+    const rows = changed.map(j => ({
+      job_id:     j.id,
+      client:     j.client || null,
+      stage:      typeof j.stage === "number" ? j.stage : 0,
+      status:     j.status || "waiting",
+      urgent:     j.urgent || "normal",
+      created_at: j.createdAt || null,
+      data:       j
+    }));
+    return sb.from("jobs").upsert(rows, {onConflict:"job_id"}).then(({error}) => {
+      if(error) console.warn("[ORBIT] jobs push failed:", error.message); else markDone(changed);
+    }).catch(err => console.warn("[ORBIT] jobs push error:", err));
+  }
+  // NOT logged in (worker scanned a QR code on the shop floor): may only update an EXISTING job,
+  // through the restricted database function qr_update_job (see supabase-qr-update.sql).
+  return Promise.all(changed.map(j =>
+    sb.rpc("qr_update_job", { p_job_id: j.id, p_data: j }).then(({error}) => {
+      if(error) console.warn("[ORBIT] QR job update failed:", error.message); else markDone([j]);
+    }).catch(err => console.warn("[ORBIT] QR job update error:", err))
+  ));
 }
 
 function orbitSyncPushNotifications(){
   const sb = orbitSB(); if(!sb) return Promise.resolve();
   const notifs = orbitGetNotifications();
+  if(!orbitGetSessionUser()){
+    // shop-floor phone (not logged in): send only NEW notifications, via the restricted function
+    let done = []; try{ done = JSON.parse(localStorage.getItem("orbit_notifs_pushed") || "[]"); }catch(e){}
+    const fresh = notifs.slice(0, 30).filter(n => n && n.id && done.indexOf(String(n.id)) === -1);
+    return Promise.all(fresh.map(n =>
+      sb.rpc("qr_add_notification", { p_notif_id: String(n.id), p_data: n }).then(({error}) => {
+        if(error) console.warn("[ORBIT] QR notification failed:", error.message);
+        else { done.push(String(n.id)); try{ localStorage.setItem("orbit_notifs_pushed", JSON.stringify(done.slice(-200))); }catch(e){} }
+      }).catch(err => console.warn("[ORBIT] QR notification error:", err))
+    ));
+  }
   const rows = notifs.slice(0, 500).map(n => ({ notif_id: String(n.id), data: n }));
   return sb.from("notifications").upsert(rows, {onConflict:"notif_id"}).then(({error}) => {
     if(error) console.warn("[ORBIT] notifications push failed:", error.message);
@@ -159,9 +193,18 @@ function orbitSyncPull(){
     if(jRes.data){
       const remoteJobs = (jRes.data || []).map(r => Object.assign({}, r.data, { id: r.job_id }));
       // merge: remote as base, local unsynced jobs/updates win (never wipe a just-created order)
-      const byId = {};
-      remoteJobs.forEach(j => { byId[j.id] = j; });
-      try { orbitGetJobs().forEach(j => { byId[j.id] = j; }); } catch(e){}
+      // merge: for each job the NEWER copy wins (so a phone's stage update shows up on the PC);
+      // jobs that exist only on this device are kept until they have been pushed.
+      const byId = {}; const pushedMap = orbitPushedMap();
+      remoteJobs.forEach(j => { byId[j.id] = j; pushedMap[j.id] = j._updatedAt || 0; });
+      try {
+        orbitGetJobs().forEach(l => {
+          const r = byId[l.id];
+          if(!r){ byId[l.id] = l; delete pushedMap[l.id]; }
+          else if(orbitJobIsNewer(l, r)){ byId[l.id] = l; delete pushedMap[l.id]; }
+        });
+      } catch(e){}
+      orbitSetPushedMap(pushedMap);
       const jobs = Object.values(byId).sort((a,b) => String(a.id).localeCompare(String(b.id)));
       localStorage.setItem("orbit_jobs", JSON.stringify(jobs));
     }
@@ -323,6 +366,17 @@ function orbitGetJobs(){
   return empty;
 }
 function orbitSaveJobs(jobs){
+  // Stamp every job whose content changed with _updatedAt, so different devices can tell which copy is newer.
+  try{
+    const before = {};
+    JSON.parse(localStorage.getItem("orbit_jobs") || "[]").forEach(j => { if(j && j.id){ const c = Object.assign({}, j); delete c._updatedAt; before[j.id] = JSON.stringify(c); } });
+    const now = Date.now();
+    jobs.forEach(j => {
+      if(!j || !j.id) return;
+      const c = Object.assign({}, j); delete c._updatedAt;
+      if(before[j.id] !== JSON.stringify(c)) j._updatedAt = now;
+    });
+  }catch(e){ console.warn("[ORBIT] job stamp failed:", e); }
   localStorage.setItem("orbit_jobs", JSON.stringify(jobs));
   orbitSyncPushJobs();
 }
