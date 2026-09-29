@@ -434,7 +434,9 @@ async function submitDesign(){
     orbitUpdateJob(sdJob, { designData: dd });
     orbitNotifyDepartments(sdJob, clientName || j.client, 1,
       sdJob + " artwork submitted by " + me + " — awaiting Sales approval", ["sales.html"]);
+    orbitToast("Design submitted — awaiting Sales approval", "success");
   }
+  if(!sdJob){ orbitToast("Error: no job ID — go back to My Design Jobs and click Submit from there", "danger"); return; }
   const jobLabel = sdJob || designName;
   orbitLogAction(jobLabel + ": artwork submitted to Sales (" + finishing + ", " + lamination + ", " + colour + ")", "success");
 
