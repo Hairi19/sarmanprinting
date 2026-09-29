@@ -90,13 +90,9 @@ function orbitSyncPushProfiles(){
     pages:    e.pages || ["dashboard.html"],
     active:   e.active !== false
   }));
-  const localIds = rows.map(r => r.emp_id);
   return sb.from("profiles").upsert(rows, {onConflict:"emp_id"}).then(({error}) => {
-    if(error){ console.warn("[ORBIT] profiles push failed:", error.message); return; }
-    // remove employees deleted in the admin panel from the remote table too
-    if(localIds.length === 0) return sb.from("profiles").delete().gte("emp_id", 0);
-    return sb.from("profiles").delete().not("emp_id", "in", "(" + localIds.join(",") + ")");
-  }).then(() => {}).catch(err => console.warn("[ORBIT] profiles push error:", err));
+    if(error) console.warn("[ORBIT] profiles push failed:", error.message);
+  }).catch(err => console.warn("[ORBIT] profiles push error:", err));
 }
 
 function orbitSyncPushJobs(){
@@ -229,6 +225,13 @@ function orbitDeleteEmployee(id){
   const emps = orbitGetEmployees();
   const filtered = emps.filter(e => e.id !== parseInt(id));
   orbitSaveEmployees(filtered);
+  // delete ONLY this employee remotely (never wipe rows this device simply hasn't seen yet)
+  const sb = orbitSB();
+  if(sb){
+    sb.from("profiles").delete().eq("emp_id", parseInt(id)).then(({error}) => {
+      if(error) console.warn("[ORBIT] profile delete failed:", error.message);
+    });
+  }
 }
 function orbitGenerateInitials(name){
   if(!name) return "??";

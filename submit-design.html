@@ -256,6 +256,7 @@
     </div>
 
     <!-- Action Buttons -->
+<div id="sd-error" role="alert" style="display:none;margin:0 0 14px;padding:14px 18px;border-radius:12px;background:#FDECEC;border:1px solid #C0272B;color:#8A1C1F;font-weight:600;font-size:14px;"></div>
     <div class="job-actions" style="border-top:2px solid var(--line);padding-top:1.25rem;justify-content:flex-end;">
       <button class="btn" onclick="location.href='designer.html'+location.search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
@@ -362,6 +363,14 @@ updateSummary();
 
 /* ===== Submit ===== */
 async function submitDesign(){
+  const __errBox = document.getElementById("sd-error");
+  function sdFail(msg, el){
+    if(__errBox){ __errBox.textContent = "⚠ " + msg; __errBox.style.display = "block"; }
+    orbitToast(msg, "danger");
+    if(el){ el.scrollIntoView({behavior:"smooth", block:"center"}); if(el.focus) el.focus(); }
+    else if(__errBox){ __errBox.scrollIntoView({behavior:"smooth", block:"center"}); }
+  }
+  if(__errBox) __errBox.style.display = "none";
   const designName = document.getElementById("sd-design-name").value.trim();
   const clientName = document.getElementById("sd-client-name").value.trim();
   const finishing = document.getElementById("sd-finishing").value;
@@ -370,17 +379,15 @@ async function submitDesign(){
 
   // Validation
   if(!designName){
-    orbitToast("Please enter the Design Name", "warning");
-    document.getElementById("sd-design-name").focus();
+    sdFail("Please enter the Design Name", document.getElementById("sd-design-name"));
     return;
   }
   if(!clientName){
-    orbitToast("Please enter the Client Name", "warning");
-    document.getElementById("sd-client-name").focus();
+    sdFail("Please enter the Client Name", document.getElementById("sd-client-name"));
     return;
   }
   if(!finishing || !lamination || !colour){
-    orbitToast("Please select all finishing specifications", "warning");
+    sdFail("Please select Finishing, Lamination and Colour", document.getElementById("sd-finishing"));
     return;
   }
 
@@ -391,11 +398,11 @@ async function submitDesign(){
   const designUploaded = document.getElementById("design-file").files.length > 0;
 
   if(!diecutFile && !finalFile && !diecutUploaded && !designUploaded){
-    orbitToast("Please attach or reference at least one artwork file", "warning");
+    sdFail("Please attach a file OR type a file name in Die-Cut / Final Design File Reference (at least one is required)", document.getElementById("sd-final-file"));
     return;
   }
 
-  if(!sdJob){ orbitToast("Error: no job ID — go back to My Design Jobs and click Submit from there", "danger"); return; }
+  if(!sdJob){ sdFail("No job ID — go back to My Design Jobs and click Submit from there"); return; }
   // ===== UPLOAD real files to Supabase Storage (override text links if a file was picked) =====
   const __btn = document.querySelector('button[onclick="submitDesign()"]');
   const __btnLabel = __btn ? __btn.innerHTML : "";
