@@ -206,7 +206,20 @@ const loginRedirect = loginParams.get("redirect");
   const uid = orbitGetUid();
   if(uid !== null){
     const u = ORBIT_USERS[uid];
-    location.href = (u && u.landing) ? u.landing : "dashboard.html";
+    location.href = loginRedirect || ((u && u.landing) ? u.landing : "dashboard.html");
+    return;
+  }
+  // Session exists but the local staff cache is empty (new device / cleared cache):
+  // load the profile from Supabase instead of forcing a second login.
+  const sb = orbitSB();
+  if(sb && orbitGetSessionUser()){
+    sb.auth.getSession().then(function(r){
+      const sess = r && r.data && r.data.session;
+      if(!sess) return;
+      return orbitEnsureProfileForUser(sess.user).then(function(emp){
+        if(emp) location.href = loginRedirect || emp.landing || "dashboard.html";
+      });
+    }).catch(function(e){ console.warn("[ORBIT] session restore failed:", e); });
   }
 })();
 
