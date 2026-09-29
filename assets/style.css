@@ -421,9 +421,9 @@ a:hover{text-decoration:underline;}
   top:0;
   left:0;
   right:0;
-  height:3px;
-  background:linear-gradient(90deg, var(--brand-red) 0%, var(--brand-red) 20%, transparent 20%, transparent 22%, var(--ink) 22%, var(--ink) 24%, transparent 24%);
-  opacity:0.6;
+  height:4px;
+  background:linear-gradient(90deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  opacity:1;
 }
 .card.accent-top::before{
   height:4px;
@@ -2131,3 +2131,21 @@ fieldset.orbit-fieldset legend{
 
 /* toast must appear above modals */
 .toast{ z-index:99999 !important; }
+
+
+/* ============================================================
+   SMOOTH PAGE-TO-PAGE NAVIGATION (header menu clicks)
+   The red header stays in place and only the page content fades.
+   Works in Chrome / Edge / Brave; other browsers just navigate normally.
+   ============================================================ */
+@view-transition{ navigation:auto; }
+.topbar{ view-transition-name:topbar; }
+::view-transition-group(topbar){ animation-duration:.25s; }
+::view-transition-old(root){ animation:orbit-vt-out .16s ease-in both; }
+::view-transition-new(root){ animation:orbit-vt-in .30s ease-out .04s both; }
+@keyframes orbit-vt-out{ from{opacity:1;} to{opacity:0;} }
+@keyframes orbit-vt-in{ from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+.pill-nav button:active{ transform:scale(.96); }
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){ animation:none !important; }
+}
