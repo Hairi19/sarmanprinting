@@ -391,6 +391,9 @@ function openStageUpdate(jobId){
 }
 
 /* ===== Camera Functions ===== */
+/* async functions declared inside a block are NOT global, so inline onclick can't see them — expose explicitly */
+window.startCamera = startCamera;
+window.handlePhotoUpload = handlePhotoUpload;
 async function startCamera(){
   const box = document.getElementById("camera-box");
   box.innerHTML = '<video id="camera-video" autoplay playsinline style="width:100%;"></video>';

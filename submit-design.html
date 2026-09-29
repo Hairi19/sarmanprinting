@@ -362,6 +362,8 @@ function updateFileSummary(){
 updateSummary();
 
 /* ===== Submit ===== */
+/* async functions declared inside a block are NOT global, so inline onclick can't see them — expose explicitly */
+window.submitDesign = submitDesign;
 async function submitDesign(){
   const __errBox = document.getElementById("sd-error");
   function sdFail(msg, el){
