@@ -204,6 +204,57 @@ function autoTickLandingPage(slug){
   if(cb) cb.checked = true;
 }
 
+
+/* ===== Department presets: roles dropdown + auto-ticked page access ===== */
+const DEPT_ROLES = {
+  "Management": ["Boss / Owner","Director","General Manager","Manager"],
+  "IT":         ["IT Administrator","System Admin","IT Support"],
+  "Sales":      ["Sales Manager","Sales Supervisor","Sales Executive","Customer Service"],
+  "Design":     ["Design Manager","Senior Designer","Graphic Designer","Junior Designer"],
+  "Planning":   ["Planning Manager","Production Planner","Planning Executive"],
+  "Production": ["Production Manager","Production Supervisor","Machine Operator","Finishing Operator","QC Staff"],
+  "Delivery":   ["Delivery Supervisor","Rider / Driver","Dispatch Coordinator"],
+  "Finance":    ["Finance Manager","Accountant","Finance Executive"]
+};
+const DEPT_PRESETS = {
+  "Management": { pages: ALL_PAGES.slice(), landing: "dashboard.html" },
+  "IT":         { pages: ALL_PAGES.slice(), landing: "admin.html" },
+  "Sales":      { pages: ["sales.html","new-order.html"], landing: "sales.html" },
+  "Design":     { pages: ["designer.html","submit-design.html"], landing: "designer.html" },
+  "Planning":   { pages: ["planner.html"], landing: "planner.html" },
+  "Production": { pages: ["production.html","log-output.html"], landing: "production.html" },
+  "Delivery":   { pages: ["delivery.html"], landing: "delivery.html" },
+  "Finance":    { pages: ["dashboard.html"], landing: "dashboard.html" }
+};
+function escAttr(v){ return String(v==null?"":v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function roleOptionsHtml(dept, current){
+  const list = (DEPT_ROLES[dept] || []).slice();
+  let html = '<option value="">' + (dept ? 'Select role...' : 'Select department first...') + '</option>';
+  // keep an existing custom role visible when editing an old employee
+  if(current && list.indexOf(current) === -1) list.push(current);
+  html += list.map(function(r){ return '<option value="' + escAttr(r) + '"' + (r === current ? ' selected' : '') + '>' + escAttr(r) + '</option>'; }).join("");
+  if(dept) html += '<option value="__other__">Other (type your own)…</option>';
+  return html;
+}
+function onRoleChange(val){
+  const box = document.getElementById("emp-role-other");
+  if(box){ box.style.display = (val === "__other__") ? "block" : "none"; if(val === "__other__") box.focus(); }
+}
+function onDeptChange(dept){
+  // 1) refresh the role dropdown for this department
+  const sel = document.getElementById("emp-role");
+  if(sel){ sel.innerHTML = roleOptionsHtml(dept, ""); onRoleChange(""); }
+  // 2) auto-tick the pages that belong to this department (can still be changed by hand)
+  const preset = DEPT_PRESETS[dept];
+  if(!preset) return;
+  document.querySelectorAll('input[name="emp-pages"]').forEach(function(cb){
+    cb.checked = preset.pages.indexOf(cb.value) !== -1;
+  });
+  const land = document.getElementById("emp-landing");
+  if(land) land.value = preset.landing;
+}
+
 /* ===== Show Modal ===== */
 function showModal(data, title){
   const modal = document.getElementById("emp-modal");
@@ -236,7 +287,7 @@ function showModal(data, title){
           '<div class="formgrid-2">' +
             '<div><label>Initials <span style="color:var(--ink-light);font-weight:400;">(auto-generated)</span></label><input type="text" id="emp-initials" value="' + (data.initials || '') + '" placeholder="e.g. NA" maxlength="2"></div>' +
             '<div><label>Department <span class="req">*</span></label>' +
-              '<select id="emp-dept">' +
+              '<select id="emp-dept" onchange="onDeptChange(this.value)">' +
                 '<option value="">Select...</option>' +
                 ['Management','IT','Sales','Design','Planning','Production','Delivery','Finance'].map(d =>
                   '<option value="' + d + '"' + (data.dept === d ? ' selected' : '') + '>' + d + '</option>'
@@ -245,7 +296,7 @@ function showModal(data, title){
             '</div>' +
           '</div>' +
           '<div class="formgrid-2">' +
-            '<div><label>Role / Job Title <span class="req">*</span></label><input type="text" id="emp-role" value="' + (data.role || '') + '" placeholder="e.g. Sales Supervisor"></div>' +
+            '<div><label>Role / Job Title <span class="req">*</span></label><select id="emp-role" onchange="onRoleChange(this.value)">' + roleOptionsHtml(data.dept || '', data.role || '') + '</select><input type="text" id="emp-role-other" placeholder="Type the role / job title" style="display:none;margin-top:8px;"></div>' +
             '<div><label>Landing Page <span class="req">*</span></label><select id="emp-landing" onchange="autoTickLandingPage(this.value)">' + landingOptions + '</select></div>' +
           '</div>' +
           '<div class="formgrid-2">' +
@@ -255,7 +306,7 @@ function showModal(data, title){
           '<div style="margin-top:8px;">' +
             '<label>Page Access Permissions <span class="req">*</span></label>' +
             '<div class="permission-grid">' + pageCheckboxes + '</div>' +
-            '<p class="note" style="margin-top:8px;">Select which pages this employee can access. Each department should only see their own workflow pages.</p>' +
+            '<p class="note" style="margin-top:8px;">Pages are ticked automatically when you choose a Department (Management and IT get every page). You can still tick or untick any page.</p>' +
           '</div>' +
         '</div>' +
         '<div id="emp-modal-error" style="display:none;color:#C0272B;background:#FDECEA;border:1px solid #F5C6C0;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;margin-bottom:10px;"></div>' +
@@ -331,7 +382,9 @@ async function saveEmployee(){
   const initials = document.getElementById("emp-initials").value.trim().toUpperCase() || orbitGenerateInitials(name);
   const email = document.getElementById("emp-email").value.trim().toLowerCase();
   const password = document.getElementById("emp-password").value;
-  const role = document.getElementById("emp-role").value.trim();
+  let role = document.getElementById("emp-role").value;
+  if(role === "__other__"){ role = (document.getElementById("emp-role-other").value || "").trim(); }
+  role = (role || "").trim();
   const dept = document.getElementById("emp-dept").value;
   const landing = document.getElementById("emp-landing").value;
   const pages = Array.from(document.querySelectorAll('input[name="emp-pages"]:checked')).map(cb => cb.value);
@@ -342,7 +395,7 @@ async function saveEmployee(){
   if(!email){ empError("Please enter email", "emp-email"); return; }
   if(editingId === null && !password){ empError("Please set a login password for the new staff", "emp-password"); return; }
   if(editingId === null && password.length < 6){ empError("Password must be at least 6 characters", "emp-password"); return; }
-  if(!role){ empError("Please enter role / job title", "emp-role"); return; }
+  if(!role){ empError("Please select the role / job title", "emp-role"); return; }
   if(!dept){ empError("Please select a Department (scroll up in the form)", "emp-dept"); return; }
   if(pages.length === 0){ empError("Select at least one page permission"); return; }
   if(!pages.includes(landing)){ empError("Landing page must also be ticked in Page Access Permissions"); return; }
