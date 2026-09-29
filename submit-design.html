@@ -395,26 +395,29 @@ async function submitDesign(){
     return;
   }
 
+  if(!sdJob){ orbitToast("Error: no job ID — go back to My Design Jobs and click Submit from there", "danger"); return; }
   // ===== UPLOAD real files to Supabase Storage (override text links if a file was picked) =====
   const __btn = document.querySelector('button[onclick="submitDesign()"]');
   if(__btn){ __btn.disabled = true; __btn.textContent = "Uploading files…"; }
+  const __uploadTimeout = new Promise((_,rej) => setTimeout(() => rej(new Error("timeout")), 8000));
   try {
     const __sb = orbitSB();
     if(__sb && __sb.storage){
       const __dc = document.getElementById("diecut-file").files[0];
       if(__dc){
         const __p = sdJob + "/diecut-" + Date.now() + "-" + __dc.name;
-        await __sb.storage.from("design-files").upload(__p, __dc);
+        await Promise.race([__sb.storage.from("design-files").upload(__p, __dc), __uploadTimeout]);
         diecutFile = __sb.storage.from("design-files").getPublicUrl(__p).data.publicUrl;
       }
       const __df = document.getElementById("design-file").files[0];
       if(__df){
         const __p = sdJob + "/design-" + Date.now() + "-" + __df.name;
-        await __sb.storage.from("design-files").upload(__p, __df);
+        await Promise.race([__sb.storage.from("design-files").upload(__p, __df), __uploadTimeout]);
         finalFile = __sb.storage.from("design-files").getPublicUrl(__p).data.publicUrl;
       }
     }
-  } catch(__e){ console.warn("upload failed:", __e); orbitToast("File upload failed — saved text links instead", "warning"); }
+  } catch(__e){ console.warn("upload failed:", __e); orbitToast("File upload skipped — saved text links instead", "info"); }
+  finally { if(__btn){ __btn.disabled = false; __btn.innerHTML = __btn.origHTML || __btn.textContent; } }
   // ===== SAVE the submission to the job (this was missing!) =====
   const me = (ORBIT_USERS[orbitGetUid()] && ORBIT_USERS[orbitGetUid()].name) || "Designer";
   const j = orbitGetJob(sdJob);
@@ -436,7 +439,6 @@ async function submitDesign(){
       sdJob + " artwork submitted by " + me + " — awaiting Sales approval", ["sales.html"]);
     orbitToast("Design submitted — awaiting Sales approval", "success");
   }
-  if(!sdJob){ orbitToast("Error: no job ID — go back to My Design Jobs and click Submit from there", "danger"); return; }
   const jobLabel = sdJob || designName;
   orbitLogAction(jobLabel + ": artwork submitted to Sales (" + finishing + ", " + lamination + ", " + colour + ")", "success");
 
