@@ -516,7 +516,7 @@ function openStageUpdate(){
 
   const container = document.getElementById("modal-container");
   container.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.innerHTML=\'\';}">' +
+    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.remove();}">' +
       '<div class="modal-sheet">' +
         '<button class="modal-close" onclick="orbitStopCamera();document.getElementById(\'modal-container\').innerHTML=\'\'">&times;</button>' +
         '<h2>Complete Stage</h2>' +

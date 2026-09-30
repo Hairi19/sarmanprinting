@@ -236,7 +236,7 @@ function openDispatchModal(jobId){
 
   const modal = document.getElementById("delivery-modal-container");
   modal.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+    '<div class="modal-overlay" onclick="if(event.target===this)this.remove()">' +
       '<div class="modal" style="max-width:560px;">' +
         '<div class="modal-header">' +
           '<h2>Dispatch — ' + jobId + '</h2>' +

@@ -1086,3 +1086,29 @@ const ORBIT_COURIERS = ["J&T Express", "Pos Laju", "GDex", "Skynet", "DHL", "Sel
    ============================================================ */
 try { orbitSyncPull(); } catch(e){ console.warn("[ORBIT] initial pull failed:", e); }
 try { setInterval(orbitSyncPull, 60000); } catch(e){}
+
+
+/* ============================================================
+   MODALS — Esc closes the top popup; dragging from inside a popup to outside
+   (e.g. selecting text) never counts as a click on the dark background.
+   ============================================================ */
+(function(){
+  let downInside = false;
+  document.addEventListener("mousedown", function(e){
+    downInside = !!(e.target && e.target.closest && e.target.closest(".modal"));
+  }, true);
+  document.addEventListener("click", function(e){
+    if(downInside && e.target && e.target.classList && e.target.classList.contains("modal-overlay")){
+      e.stopPropagation(); e.preventDefault();
+    }
+    downInside = false;
+  }, true);
+  document.addEventListener("keydown", function(e){
+    if(e.key !== "Escape") return;
+    const overlays = document.querySelectorAll(".modal-overlay");
+    if(!overlays.length) return;
+    const top = overlays[overlays.length - 1];
+    const x = top.querySelector(".modal-close");
+    if(x) x.click(); else top.remove();
+  });
+})();

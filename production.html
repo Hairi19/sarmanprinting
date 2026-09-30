@@ -250,7 +250,7 @@ function viewJobQR(jobId){
 
   const modal = document.getElementById("prod-modal-container");
   modal.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+    '<div class="modal-overlay" onclick="if(event.target===this)this.remove()">' +
       '<div class="modal" style="max-width:420px;text-align:center;">' +
         '<div class="modal-header">' +
           '<h2>QR Code — ' + jobId + '</h2>' +
@@ -275,7 +275,7 @@ function viewJobQR(jobId){
 function viewPhoto(photoData){
   const modal = document.getElementById("prod-modal-container");
   modal.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+    '<div class="modal-overlay" onclick="if(event.target===this)this.remove()">' +
       '<div class="modal" style="max-width:560px;">' +
         '<div class="modal-header">' +
           '<h2>Photo Proof</h2>' +
@@ -301,7 +301,7 @@ function openStageUpdate(jobId){
 
   const modal = document.getElementById("prod-modal-container");
   modal.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.innerHTML=\'\';}">' +
+    '<div class="modal-overlay" onclick="if(event.target===this){orbitStopCamera();this.remove();}">' +
       '<div class="modal" style="max-width:640px;">' +
         '<div class="modal-header">' +
           '<h2>Update Stage — ' + jobId + '</h2>' +
@@ -481,7 +481,7 @@ function submitStageUpdate(jobId){
 function openQRScanner(){
   const modal = document.getElementById("prod-modal-container");
   modal.innerHTML =
-    '<div class="modal-overlay" onclick="if(event.target===this)this.innerHTML=\'\'">' +
+    '<div class="modal-overlay" onclick="if(event.target===this)this.remove()">' +
       '<div class="modal" style="max-width:480px;">' +
         '<div class="modal-header">' +
           '<h2>Scan Job QR Code</h2>' +
