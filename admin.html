@@ -6,6 +6,7 @@
 <title>Admin Panel · ORBIT</title>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" type="image/png" href="assets/logo.png">
+<style>.pw-seg{flex:1;height:6px;border-radius:99px;background:#E5E1D8;transition:background .2s ease;}</style>
 </head>
 <body>
 
@@ -111,10 +112,17 @@ function renderEmployees(){
   const tbody = document.getElementById("emp-table-body");
   tbody.innerHTML = emps.map(e => {
     const pages = e.pages || [];
-    const pageBadges = ALL_PAGES.map(p =>
-      '<span class="page-badge ' + (pages.includes(p) ? 'allowed' : '') + '">' +
-      (PAGE_LABELS[p] || p).replace(/\.html$/,'') + '</span>'
-    ).join('');
+    const allowedPages = ALL_PAGES.filter(p => pages.includes(p));
+    let pageBadges;
+    if(allowedPages.length === ALL_PAGES.length){
+      pageBadges = '<span class="page-badge allowed" title="Can open every page">All Access</span>';
+    } else if(allowedPages.length === 0){
+      pageBadges = '<span class="page-badge">No access</span>';
+    } else {
+      pageBadges = allowedPages.map(p =>
+        '<span class="page-badge allowed">' + (PAGE_LABELS[p] || p).replace(/\.html$/,'') + '</span>'
+      ).join('');
+    }
 
     return '<tr class="orbit-filterable" data-job="' + e.initials + '" data-client="' + e.name + '" data-important="false">' +
       '<td>' +
@@ -255,6 +263,33 @@ function onDeptChange(dept){
   if(land) land.value = preset.landing;
 }
 
+
+/* ===== Password strength meter (red = weak, yellow = medium, green = strong) ===== */
+function updatePwStrength(pw){
+  const meter = document.getElementById("pw-meter");
+  if(!meter) return;
+  if(!pw){ meter.style.display = "none"; return; }
+  meter.style.display = "block";
+  const hasLower = /[a-z]/.test(pw), hasUpper = /[A-Z]/.test(pw), hasNum = /[0-9]/.test(pw), hasSym = /[^A-Za-z0-9]/.test(pw);
+  const kinds = [hasLower, hasUpper, hasNum, hasSym].filter(Boolean).length;
+  let level;                                   // 1 = weak, 2 = medium, 3 = strong
+  if(pw.length < 8 || kinds < 2) level = 1;
+  else if(pw.length >= 10 && kinds >= 3) level = 3;
+  else level = 2;
+  const colors = {1:"#C0272B", 2:"#E0A100", 3:"#1E8E4E"};
+  const names  = {1:"Weak", 2:"Medium", 3:"Strong"};
+  const segs = meter.querySelectorAll(".pw-seg");
+  segs.forEach(function(sg, i){ sg.style.background = (i < level) ? colors[level] : "#E5E1D8"; });
+  const tips = [];
+  if(pw.length < 10) tips.push("10+ characters");
+  if(!(hasLower && hasUpper)) tips.push("upper & lowercase");
+  if(!hasNum) tips.push("a number");
+  if(!hasSym) tips.push("a symbol");
+  const t = document.getElementById("pw-text");
+  t.style.color = colors[level];
+  t.textContent = names[level] + (level < 3 && tips.length ? " — add " + tips.join(", ") : (level === 3 ? " — good password" : ""));
+}
+
 /* ===== Show Modal ===== */
 function showModal(data, title){
   const modal = document.getElementById("emp-modal");
@@ -301,7 +336,11 @@ function showModal(data, title){
           '</div>' +
           '<div class="formgrid-2">' +
             '<div><label>Email <span class="req">*</span></label><input type="email" id="emp-email" value="' + (data.email || '') + '" placeholder="e.g. ali@company.com"></div>' +
-            '<div><label>Login Password ' + (editingId === null ? '<span class="req">*</span>' : '') + '</label><input type="text" id="emp-password" value="' + (data.password || '') + '" placeholder="' + (editingId === null ? 'Set staff login password (min 6 chars)' : 'Leave blank — password unchanged') + '"></div>' +
+            '<div><label>Login Password ' + (editingId === null ? '<span class="req">*</span>' : '') + '</label><input type="text" id="emp-password" oninput="updatePwStrength(this.value)" autocomplete="new-password" value="' + (data.password || '') + '" placeholder="' + (editingId === null ? 'Set staff login password (min 6 chars)' : 'Leave blank — password unchanged') + '">' +
+              '<div id="pw-meter" style="display:none;margin-top:8px;">' +
+                '<div style="display:flex;gap:5px;"><span class="pw-seg"></span><span class="pw-seg"></span><span class="pw-seg"></span></div>' +
+                '<div id="pw-text" style="margin-top:5px;font-size:12px;font-weight:600;"></div>' +
+              '</div></div>' +
           '</div>' +
           '<div style="margin-top:8px;">' +
             '<label>Page Access Permissions <span class="req">*</span></label>' +
@@ -405,6 +444,34 @@ async function saveEmployee(){
   if(existing && existing.id !== editingId){
     empError("This email is already registered — use a different email", "emp-email");
     return;
+  }
+
+  // EDIT: keep the real Supabase login (email / password) in sync with what was changed here
+  if(editingId !== null){
+    if(password && password.length < 6){ empError("Password must be at least 6 characters", "emp-password"); return; }
+    const prevEmp = orbitGetEmployees().find(function(e){ return e.id === editingId; });
+    const prevEmail = prevEmp ? String(prevEmp.email || "").toLowerCase() : email;
+    const emailChanged = prevEmail !== email;
+    const sbx = orbitSB();
+    if(sbx && (emailChanged || password)){
+      const res = await sbx.rpc("admin_update_staff_login", { p_old_email: prevEmail, p_new_email: email, p_new_password: password || null });
+      if(res.error){
+        const notSetUp = /could not find the function|schema cache|does not exist/i.test(res.error.message || "");
+        empError(notSetUp
+          ? "Login update is not set up yet — run supabase-admin-login.sql once in the Supabase SQL Editor."
+          : "Could not update the staff login: " + res.error.message);
+        return;
+      }
+      if(res.data === "no_login"){
+        if(password){
+          const r2 = await orbitCreateStaffLogin(email, password);
+          if(!r2.ok){ empError("Could not create the login: " + r2.msg); return; }
+          orbitToast("This staff had no login yet — a new login was created for " + email, "success");
+        } else if(emailChanged){
+          orbitToast("Profile saved, but this staff has no login yet — edit again and set a password to create one", "warning");
+        }
+      }
+    }
   }
 
   // create the Supabase Auth login for a new staff member (so they can log in immediately)
